@@ -144,6 +144,30 @@ test.describe('Sprint 2: Blog Management Studio & Public Discovery Engine', () =
     await expect(page.locator('.blog-grid')).toContainText(testBlogTitle);
   });
 
+  test('Issue #4 (Negative Path): Form Validation for Empty Title and Content', async ({ page }) => {
+    // Login as Admin
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', 'Admin@123456');
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/admin/blogs');
+
+    await page.click('#admin-create-blog-btn');
+    await page.waitForURL('/admin/blogs/new');
+
+    // Verify predefined categories
+    const categories = await page.locator('#blog-category-select option').allInnerTexts();
+    expect(categories).toContain('Technology');
+    expect(categories).toContain('Design');
+    expect(categories).toContain('Career');
+    expect(categories).toContain('Tutorials');
+
+    // Attempt to publish without filling title or content
+    await page.click('#editor-publish-btn');
+    await expect(page.locator('#editor-error-banner')).toBeVisible();
+    await expect(page.locator('#editor-error-banner')).toContainText('Please provide both an article title and content body');
+  });
+
   test('Issue #5 (Edge Case 3, 18 & 21): Unpublish vs. Publish Lifecycle & Strict 404 for Guests', async ({ page, browser }) => {
     // Admin logs in and creates a draft blog
     await page.goto('/login');
