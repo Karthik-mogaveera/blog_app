@@ -1,0 +1,37 @@
+{
+  "name": "blog-application",
+  "version": "1.0.0",
+  "description": "Full-Stack Blog Application with Admin Publishing, Reader Engagement, Multi-Level Discussions & Notifications",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "node server/server.js",
+    "client": "npm --prefix client run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "npm --prefix client run build",
+    "test:e2e": "playwright test",
+    "db:view": "node server/view-db.js"
+  },
+  "keywords": [
+    "blog",
+    "react",
+    "express",
+    "mongodb",
+    "mongoose",
+    "playwright"
+  ],
+  "author": "Antigravity Engineering",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "concurrently": "^9.1.2"
+  }
+}
