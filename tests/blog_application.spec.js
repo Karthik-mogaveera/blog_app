@@ -4,9 +4,23 @@ test.describe('Sprint 1: System Scaffolding, Design System & Authentication', ()
   test('Issue #1: Backend Health Check & Database Connection', async ({ request }) => {
     const response = await request.get('/api/health');
     expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(200);
     const data = await response.json();
     expect(data.status).toBe('healthy');
     expect(data.database).toBe('connected');
+    expect(typeof data.uptime).toBe('number');
+    expect(data.environment).toBeDefined();
+  });
+
+  test('Issue #1: Client-Side Scaffolding & Browser Connectivity', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    await page.goto('/');
+    // Verify client HTML mounts properly
+    await expect(page.locator('#root')).toBeVisible();
+    expect(await page.title()).toBeTruthy();
+    expect(errors).toHaveLength(0);
   });
 
   test('Issue #2: Design System & Responsive Shell', async ({ page }) => {
