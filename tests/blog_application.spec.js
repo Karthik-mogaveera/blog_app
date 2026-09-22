@@ -210,6 +210,50 @@ test.describe('Sprint 2: Blog Management Studio & Public Discovery Engine', () =
     await guestContext.close();
   });
 
+  test('Issue #5: Admin Table Status Toggle (Publish/Unpublish) & Permanent Deletion Cascade', async ({ page }) => {
+    // Admin login
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', 'Admin@123456');
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/admin/blogs');
+
+    // Create a temporary blog to test lifecycle controls
+    const tempTitle = `Lifecycle Test Blog ${Date.now()}`;
+    await page.click('#admin-create-blog-btn');
+    await page.waitForURL('/admin/blogs/new');
+    await page.fill('#blog-title-input', tempTitle);
+    await page.fill('#blog-content-textarea', 'Lifecycle test content for unpublish and permanent delete.');
+    await page.click('#editor-save-draft-btn');
+    await page.waitForURL('/admin/blogs');
+
+    const row = page.locator(`tr:has-text("${tempTitle}")`);
+    await expect(row).toBeVisible();
+    await expect(row.locator('.badge-draft')).toBeVisible();
+
+    // 1. Toggle to Publish
+    const toggleBtn = row.locator('button:has-text("Publish")');
+    await toggleBtn.click();
+    await expect(row.locator('.badge-published')).toBeVisible();
+    await expect(row.locator('button:has-text("Unpublish")')).toBeVisible();
+
+    // 2. Toggle back to Unpublish (Draft)
+    const unpublishBtn = row.locator('button:has-text("Unpublish")');
+    await unpublishBtn.click();
+    await expect(row.locator('.badge-draft')).toBeVisible();
+    await expect(row.locator('button:has-text("Publish")')).toBeVisible();
+
+    // 3. Permanent Deletion with confirmation
+    page.once('dialog', async (dialog) => {
+      await dialog.accept();
+    });
+    const deleteBtn = row.locator('button[title*="Permanently delete"]');
+    await deleteBtn.click();
+
+    // Verify row is removed from table
+    await expect(page.locator(`tr:has-text("${tempTitle}")`)).toHaveCount(0);
+  });
+
   test('Issue #6: Public Catalog Search & Category Filters', async ({ page }) => {
     await page.goto('/');
 
