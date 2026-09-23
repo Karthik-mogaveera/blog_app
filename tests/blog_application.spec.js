@@ -392,6 +392,42 @@ test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Mod
     await expect(page.locator('#btn-like-toggle')).not.toHaveClass(/liked/);
   });
 
+  test('Issue #7: Like State Persistence Across Page Reload & Reading Experience Elements', async ({ page }) => {
+    // 1. Register reader
+    const readerUser = `persister_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@test.com`);
+    await page.fill('#register-password', 'Password@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Open first article
+    await page.locator('.blog-card-title').first().click();
+    await page.waitForSelector('#btn-like-toggle');
+
+    // 3. Verify reading experience container & elements
+    await expect(page.locator('.article-title')).toBeVisible();
+    await expect(page.locator('.article-author-meta')).toBeVisible();
+    await expect(page.locator('#article-body-text')).toBeVisible();
+    await expect(page.locator('.like-bar')).toBeVisible();
+
+    // 4. Like the article
+    await page.click('#btn-like-toggle');
+    await page.waitForTimeout(500);
+    await expect(page.locator('#btn-like-toggle')).toHaveClass(/liked/);
+
+    // 5. Reload page to verify persistence of like state
+    await page.reload();
+    await page.waitForSelector('#btn-like-toggle');
+    await expect(page.locator('#btn-like-toggle')).toHaveClass(/liked/);
+
+    // 6. Verify back navigation
+    await page.click('#btn-back-to-articles');
+    await page.waitForURL('/');
+    await expect(page.locator('#articles-container')).toBeVisible();
+  });
+
   test('Issue #8 & #9: Multi-Level Threaded Comments, Author Edit & Cascade Deletion', async ({ page }) => {
     // Register reader
     const commenter = `commenter_${Date.now()}`;
