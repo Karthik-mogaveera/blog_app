@@ -775,6 +775,71 @@ test.describe('Sprint 4: In-App Notification Center', () => {
 
     await contextA.close();
   });
+
+  test('Issue #11: End-to-End System Hardening, Cross-Role Lifecycle & Security Guards', async ({ page }) => {
+    const pageErrors = [];
+    page.on('pageerror', (err) => pageErrors.push(err.message));
+
+    // Phase 1: Guest Browsing & Security Route Guard
+    await page.goto('/');
+    await expect(page.locator('#root')).toBeVisible();
+    await expect(page.locator('#nav-brand-logo')).toBeVisible();
+
+    // Guest attempts direct navigation to Admin Studio -> Must be blocked
+    await page.goto('/admin/blogs');
+    await page.waitForURL('/login');
+    await expect(page.locator('#login-identifier')).toBeVisible();
+
+    // Phase 2: Reader Registration & Content Engagement
+    const readerUser = `harden_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@test.com`);
+    await page.fill('#register-password', 'Password@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // Check navbar reader avatar
+    await expect(page.locator('#nav-user-pill')).toBeVisible();
+
+    // Open first article
+    await page.locator('.blog-card-title').first().click();
+    await page.waitForSelector('#btn-like-toggle');
+
+    // Toggle like
+    await page.click('#btn-like-toggle');
+    await page.waitForTimeout(500);
+    await expect(page.locator('#btn-like-toggle')).toHaveClass(/liked/);
+
+    // Post comment
+    const hardenComment = `Hardening verification comment ${Date.now()}`;
+    await page.fill('#comment-input-textarea', hardenComment);
+    await page.click('#comment-submit-btn');
+    await expect(page.locator('.comment-tree')).toContainText(hardenComment);
+
+    // Logout reader
+    await page.click('#nav-btn-logout');
+    await expect(page.locator('#nav-btn-login')).toBeVisible();
+
+    // Phase 3: Admin Studio & Lifecycle Controls
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', 'Admin@123456');
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/admin/blogs');
+
+    // Check Studio elements
+    await expect(page.locator('#admin-create-blog-btn')).toBeVisible();
+    await expect(page.locator('#admin-blogs-table')).toBeVisible();
+
+    // Navigate to Moderation
+    await page.click('#nav-link-admin-moderation');
+    await page.waitForURL('/admin/comments');
+    await expect(page.locator('#admin-moderation-table')).toBeVisible();
+
+    // Zero uncaught runtime errors across full journey
+    expect(pageErrors).toHaveLength(0);
+  });
 });
 
 test.describe('Sprint 5: Enhanced UI & Visual Ergonomics', () => {
