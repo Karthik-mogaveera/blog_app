@@ -39,6 +39,37 @@ test.describe('Sprint 1: System Scaffolding, Design System & Authentication', ()
     await expect(page.locator('footer')).toContainText('Chronicle Platform');
   });
 
+  test('Issue #2 (Negative Path): Missing Route Renders Clean 404 Layout', async ({ page }) => {
+    await page.goto('/some-missing-article-url-route-404');
+    await expect(page.locator('h1')).toContainText('404');
+    await expect(page.locator('h2')).toContainText('Page Not Found');
+    const returnBtn = page.locator('#btn-return-home-404');
+    await expect(returnBtn).toBeVisible();
+    await returnBtn.click();
+    await page.waitForURL('/');
+    await expect(page.locator('#nav-brand-logo')).toBeVisible();
+  });
+
+  test('Issue #2: Responsive Mobile Shell & Collapsible Drawer Toggle', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+
+    const toggle = page.locator('#nav-mobile-toggle');
+    await expect(toggle).toBeVisible();
+
+    // Drawer should not be visible initially
+    await expect(page.locator('#nav-mobile-drawer')).toHaveCount(0);
+
+    // Click toggle to open drawer
+    await toggle.click();
+    await expect(page.locator('#nav-mobile-drawer')).toBeVisible();
+    await expect(page.locator('#nav-mobile-link-home')).toBeVisible();
+
+    // Click toggle to close drawer
+    await toggle.click();
+    await expect(page.locator('#nav-mobile-drawer')).toHaveCount(0);
+  });
+
   test('Issue #3: Reader Registration, Initials Avatar & Login Flow', async ({ page }) => {
     const uniqueUser = `reader_${Date.now()}`;
     const uniqueEmail = `${uniqueUser}@example.com`;
