@@ -115,7 +115,20 @@ test.describe('Sprint 1: System Scaffolding, Design System & Authentication', ()
     await page.fill('#register-password', 'Secret@123');
     await page.click('#register-submit-btn');
 
-    await expect(page.locator('.form-error, div[style*="rgb(251, 113, 133)"]')).toBeVisible();
+    const err = page.locator('#register-error-banner');
+    await expect(err).toBeVisible();
+    await expect(err).toContainText('already taken');
+  });
+
+  test('Issue #3 (Negative Case): Invalid Login Password Rejection', async ({ page }) => {
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', 'WrongPassword@999');
+    await page.click('#login-submit-btn');
+
+    const err = page.locator('#login-error-banner');
+    await expect(err).toBeVisible();
+    await expect(err).toContainText('Invalid credentials');
   });
 
   test('Issue #3 (Negative Case): Non-Admin Route Guard on /admin/blogs', async ({ page }) => {

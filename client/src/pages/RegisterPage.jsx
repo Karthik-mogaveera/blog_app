@@ -106,6 +106,7 @@ const RegisterPage = () => {
 
         {error && (
           <div
+            id="register-error-banner"
             style={{
               padding: '0.75rem 1rem',
               background: 'rgba(244, 63, 94, 0.15)',
