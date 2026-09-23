@@ -316,6 +316,36 @@ test.describe('Sprint 2: Blog Management Studio & Public Discovery Engine', () =
     const badges = page.locator('.badge-Technology');
     await expect(badges.first()).toBeVisible();
   });
+
+  test('Issue #6: Adaptive Typography Card Layout for Posts Without Cover Photo', async ({ page }) => {
+    await page.goto('/');
+    // Filter to Design category where sample blog has no cover image
+    await page.click('#filter-cat-design');
+    await page.waitForTimeout(500);
+
+    // Verify the card renders with .blog-card-typography class
+    const typographyCard = page.locator('.blog-card-typography');
+    await expect(typographyCard.first()).toBeVisible();
+    await expect(typographyCard.first().locator('.blog-card-img')).toHaveCount(0);
+  });
+
+  test('Issue #6: Search Clear & Query Reset to Page 1', async ({ page }) => {
+    await page.goto('/');
+    await page.fill('#search-input', 'Vanilla CSS');
+    await page.click('#search-submit-btn');
+    await page.waitForTimeout(500);
+    await expect(page.locator('.blog-grid')).toContainText('Vanilla CSS');
+
+    // Clear search using the X button
+    const clearBtn = page.locator('#search-input ~ button');
+    await clearBtn.click();
+    await expect(page.locator('#search-input')).toHaveValue('');
+
+    // Catalog should reload all articles
+    await page.waitForTimeout(500);
+    const cards = page.locator('.blog-card');
+    expect(await cards.count()).toBeGreaterThanOrEqual(1);
+  });
 });
 
 test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Moderation', () => {
