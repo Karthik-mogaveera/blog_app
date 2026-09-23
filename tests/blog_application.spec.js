@@ -703,7 +703,7 @@ test.describe('Sprint 4: In-App Notification Center', () => {
     await commentNode.locator('button:has-text("Reply")').first().click();
     await commentNode.locator('textarea').fill(`Reply from User B to User A`);
     await commentNode.locator('button:has-text("Post Reply")').click();
-    await expect(pageB.locator('.reply-tree-branch')).toContainText(`Reply from User B to User A`);
+    await expect(commentNode.locator('.reply-tree-branch')).toContainText(`Reply from User B to User A`);
 
     // Back to User A: Notification bell should now have an unread badge!
     await pageA.reload();
@@ -716,6 +716,64 @@ test.describe('Sprint 4: In-App Notification Center', () => {
 
     await contextA.close();
     await contextB.close();
+  });
+
+  test('Issue #10: Notification Click-to-Read, Navigation & Mark All Read', async ({ browser }) => {
+    // 1. User A registers and posts comment
+    const userA = `notif_target_${Date.now()}`;
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await pageA.goto('/register');
+    await pageA.fill('#register-username', userA);
+    await pageA.fill('#register-email', `${userA}@test.com`);
+    await pageA.fill('#register-password', 'Password@123');
+    await pageA.click('#register-submit-btn');
+    await pageA.waitForURL('/');
+
+    await pageA.locator('.blog-card-title').first().click();
+    const commentText = `Target comment by ${userA}`;
+    await pageA.fill('#comment-input-textarea', commentText);
+    await pageA.click('#comment-submit-btn');
+    await expect(pageA.locator('.comment-tree')).toContainText(commentText);
+
+    // 2. User B replies
+    const userB = `notif_actor_${Date.now()}`;
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await pageB.goto('/register');
+    await pageB.fill('#register-username', userB);
+    await pageB.fill('#register-email', `${userB}@test.com`);
+    await pageB.fill('#register-password', 'Password@123');
+    await pageB.click('#register-submit-btn');
+    await pageB.waitForURL('/');
+
+    await pageB.locator('.blog-card-title').first().click();
+    const commentCard = pageB.locator(`.comment-node:has-text("${commentText}")`);
+    await commentCard.locator('button:has-text("Reply")').first().click();
+    await commentCard.locator('textarea').fill(`Replying to ${userA}`);
+    await commentCard.locator('button:has-text("Post Reply")').click();
+    await expect(commentCard.locator('.reply-tree-branch')).toContainText(`Replying to ${userA}`);
+    await contextB.close();
+
+    // 3. User A checks notification, clicks it, and verifies mark-as-read + navigation
+    await pageA.goto('/');
+    await pageA.waitForTimeout(500);
+    await expect(pageA.locator('#nav-unread-count')).toBeVisible();
+
+    await pageA.click('#nav-notification-bell');
+    await expect(pageA.locator('.notification-dropdown')).toBeVisible();
+
+    const notifItem = pageA.locator('.notification-item.unread').first();
+    await expect(notifItem).toBeVisible();
+
+    // Click notification item to navigate and mark read
+    await notifItem.click();
+    await pageA.waitForURL(/\/blog\//);
+
+    // Check that unread badge is now gone
+    await expect(pageA.locator('#nav-unread-count')).toHaveCount(0);
+
+    await contextA.close();
   });
 });
 
