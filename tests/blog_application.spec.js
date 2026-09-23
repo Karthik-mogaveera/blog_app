@@ -544,7 +544,7 @@ test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Mod
     await topCommentCard.locator('button:has-text("Post Reply")').click();
 
     // Verify reply is nested in branch
-    await expect(page.locator('.reply-tree-branch')).toContainText(replyText);
+    await expect(topCommentCard.locator('.reply-tree-branch')).toContainText(replyText);
 
     // Test Author Edit with (edited) badge
     await topCommentCard.locator('button:has-text("Edit")').first().click();
@@ -563,6 +563,53 @@ test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Mod
     // Both parent and child should be gone
     await expect(page.locator('.comment-tree')).not.toContainText(editedText);
     await expect(page.locator('.comment-tree')).not.toContainText(replyText);
+  });
+
+  test('Issue #9: Non-Owner Authorization Guard (Edit/Delete Buttons Hidden for Other Readers)', async ({ browser }) => {
+    // Reader A posts a comment
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    const userA = `author_a_${Date.now()}`;
+    await pageA.goto('/register');
+    await pageA.fill('#register-username', userA);
+    await pageA.fill('#register-email', `${userA}@test.com`);
+    await pageA.fill('#register-password', 'Password@123');
+    await pageA.click('#register-submit-btn');
+    await pageA.waitForURL('/');
+
+    await pageA.locator('.blog-card-title').first().click();
+    await pageA.waitForSelector('#new-comment-form');
+    const commentA = `User A private comment ${Date.now()}`;
+    await pageA.fill('#comment-input-textarea', commentA);
+    await pageA.click('#comment-submit-btn');
+    await expect(pageA.locator('.comment-tree')).toContainText(commentA);
+    await contextA.close();
+
+    // Reader B visits the article
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    const userB = `other_reader_${Date.now()}`;
+    await pageB.goto('/register');
+    await pageB.fill('#register-username', userB);
+    await pageB.fill('#register-email', `${userB}@test.com`);
+    await pageB.fill('#register-password', 'Password@123');
+    await pageB.click('#register-submit-btn');
+    await pageB.waitForURL('/');
+
+    await pageB.locator('.blog-card-title').first().click();
+    await pageB.waitForSelector('.comment-tree');
+
+    const commentNode = pageB.locator(`.comment-node:has-text("${commentA}")`);
+    await expect(commentNode).toBeVisible();
+
+    // Verify Reader B has NO Edit or Delete button on Reader A's comment
+    await expect(commentNode.locator('button:has-text("Edit")')).toHaveCount(0);
+    await expect(commentNode.locator('button:has-text("Delete")')).toHaveCount(0);
+
+    // Reply button should still be available for Reader B
+    await expect(commentNode.locator('button:has-text("Reply")')).toBeVisible();
+
+    await contextB.close();
   });
 
   test('Issue #9: Admin Moderation Hub & Moderator Edit Badge', async ({ page }) => {
@@ -600,7 +647,7 @@ test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Mod
 
     // Moderator Edit
     await row.locator('button[title="Edit as moderator"]').click();
-    const moderatedText = `[Moderated by Admin] Complies with community standards`;
+    const moderatedText = `[Moderated by Admin ${Date.now()}] Complies with community standards`;
     await row.locator('textarea').fill(moderatedText);
     await row.locator('button:has-text("Save")').click();
     await page.waitForTimeout(600);
@@ -614,7 +661,8 @@ test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Mod
     const blogHref = await blogLink.getAttribute('href');
     await page.goto(blogHref);
     await expect(page.locator('.comment-tree')).toContainText(moderatedText);
-    await expect(page.locator('.comment-admin-edited-label')).toBeVisible();
+    const moderatedNode = page.locator(`.comment-node:has-text("${moderatedText}")`);
+    await expect(moderatedNode.locator('.comment-admin-edited-label').first()).toBeVisible();
   });
 });
 
