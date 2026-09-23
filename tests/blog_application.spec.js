@@ -428,7 +428,92 @@ test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Mod
     await expect(page.locator('#articles-container')).toBeVisible();
   });
 
-  test('Issue #8 & #9: Multi-Level Threaded Comments, Author Edit & Cascade Deletion', async ({ page }) => {
+  test('Issue #8: Multi-Level Threaded Comments & Deep Reply Tree (Root -> Reply -> Nested Reply)', async ({ page }) => {
+    // 1. Register reader
+    const commenter = `threaded_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', commenter);
+    await page.fill('#register-email', `${commenter}@test.com`);
+    await page.fill('#register-password', 'Password@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Open first article
+    await page.locator('.blog-card-title').first().click();
+    await page.waitForSelector('#new-comment-form');
+
+    // 3. Post top-level comment (Level 0 Root)
+    const rootCommentText = `Root discussion perspective from ${commenter}`;
+    await page.fill('#comment-input-textarea', rootCommentText);
+    await page.click('#comment-submit-btn');
+    await page.waitForTimeout(500);
+
+    const rootNode = page.locator(`.comment-node:has-text("${rootCommentText}")`);
+    await expect(rootNode).toBeVisible();
+
+    // 4. Post first-level reply (Level 1)
+    await rootNode.locator('button:has-text("Reply")').first().click();
+    const reply1Text = `Level 1 reply addressing ${commenter}`;
+    await rootNode.locator('textarea').fill(reply1Text);
+    await rootNode.locator('button:has-text("Post Reply")').click();
+    await page.waitForTimeout(500);
+
+    const reply1Node = rootNode.locator(`.reply-tree-branch .comment-node:has-text("${reply1Text}")`);
+    await expect(reply1Node).toBeVisible();
+
+    // 5. Post nested second-level reply (Level 2)
+    await reply1Node.locator('button:has-text("Reply")').first().click();
+    const reply2Text = `Level 2 nested reply branching off level 1`;
+    await reply1Node.locator('textarea').fill(reply2Text);
+    await reply1Node.locator('button:has-text("Post Reply")').click();
+    await page.waitForTimeout(500);
+
+    const reply2Node = reply1Node.locator(`.reply-tree-branch .comment-node:has-text("${reply2Text}")`);
+    await expect(reply2Node).toBeVisible();
+  });
+
+  test('Issue #8: Guest CTA Banner & Empty Whitespace Comment Validation', async ({ page, browser }) => {
+    // 1. Guest visitor check
+    const guestContext = await browser.newContext();
+    const guestPage = await guestContext.newPage();
+    await guestPage.goto('/');
+    await guestPage.locator('.blog-card-title').first().click();
+
+    // Guest CTA banner must be present
+    await expect(guestPage.locator('#guest-cta-banner')).toBeVisible();
+    await expect(guestPage.locator('#cta-login-btn')).toBeVisible();
+    await expect(guestPage.locator('#cta-register-btn')).toBeVisible();
+    await expect(guestPage.locator('#new-comment-form')).toHaveCount(0);
+    await guestContext.close();
+
+    // 2. Authenticated reader validation check
+    const validatorUser = `val_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', validatorUser);
+    await page.fill('#register-email', `${validatorUser}@test.com`);
+    await page.fill('#register-password', 'Password@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    await page.locator('.blog-card-title').first().click();
+    await page.waitForSelector('#new-comment-form');
+
+    const submitBtn = page.locator('#comment-submit-btn');
+    const textarea = page.locator('#comment-input-textarea');
+
+    // Initially empty -> Submit button is disabled
+    await expect(submitBtn).toBeDisabled();
+
+    // Whitespace only -> Submit button remains disabled
+    await textarea.fill('     \n\t   ');
+    await expect(submitBtn).toBeDisabled();
+
+    // Valid text -> Submit button enabled
+    await textarea.fill('Valid insightful remark');
+    await expect(submitBtn).toBeEnabled();
+  });
+
+  test('Issue #9: Comment Ownership, Author Edit & Cascade Deletion', async ({ page }) => {
     // Register reader
     const commenter = `commenter_${Date.now()}`;
     await page.goto('/register');
@@ -478,7 +563,6 @@ test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Mod
     // Both parent and child should be gone
     await expect(page.locator('.comment-tree')).not.toContainText(editedText);
     await expect(page.locator('.comment-tree')).not.toContainText(replyText);
-    await expect(page.locator('.comment-tree')).toContainText('No comments yet');
   });
 
   test('Issue #9: Admin Moderation Hub & Moderator Edit Badge', async ({ page }) => {
