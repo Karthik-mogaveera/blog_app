@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, User, Lock, Eye, EyeOff } from 'lucide-react';
+import GoogleIcon from '../components/GoogleIcon';
+import GoogleAuthModal from '../components/GoogleAuthModal';
 
 const LoginPage = () => {
   const [identifier, setIdentifier] = useState('');
@@ -9,7 +11,9 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -37,6 +41,30 @@ const LoginPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSelectAccount = async (accountData) => {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      const user = await loginWithGoogle(accountData);
+      setIsGoogleModalOpen(false);
+      if (user.role === 'admin') {
+        navigate('/admin/blogs');
+      } else {
+        navigate(from === '/login' ? '/' : from);
+      }
+    } catch (err) {
+      setError(err.message || 'Google authentication failed.');
+      setIsGoogleModalOpen(false);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleSimulateError = () => {
+    setIsGoogleModalOpen(false);
+    setError('Google authentication failed. Please try again or sign in with email.');
   };
 
   return (
@@ -81,6 +109,25 @@ const LoginPage = () => {
             {error}
           </div>
         )}
+
+        {/* Continue with Google Button */}
+        <button
+          type="button"
+          id="btn-google-auth-login"
+          className="btn-google"
+          onClick={() => {
+            setError('');
+            setIsGoogleModalOpen(true);
+          }}
+          disabled={loading || googleLoading}
+        >
+          <GoogleIcon size={20} />
+          <span>{googleLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
+        </button>
+
+        <div className="auth-divider">
+          <span>or sign in with credentials</span>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -168,6 +215,15 @@ const LoginPage = () => {
           </Link>
         </div>
       </div>
+
+      {/* Google Authentication Modal */}
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSelectAccount={handleGoogleSelectAccount}
+        onSimulateError={handleGoogleSimulateError}
+        loading={googleLoading}
+      />
     </div>
   );
 };

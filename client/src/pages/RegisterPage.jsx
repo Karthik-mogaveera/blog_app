@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, User, Mail, Lock, Sparkles, Eye, EyeOff } from 'lucide-react';
+import GoogleIcon from '../components/GoogleIcon';
+import GoogleAuthModal from '../components/GoogleAuthModal';
 
 const RegisterPage = () => {
   const [username, setUsername] = useState('');
@@ -10,7 +12,9 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   // Compute live initials avatar preview
@@ -51,6 +55,26 @@ const RegisterPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSelectAccount = async (accountData) => {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle(accountData);
+      setIsGoogleModalOpen(false);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Google registration failed.');
+      setIsGoogleModalOpen(false);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleSimulateError = () => {
+    setIsGoogleModalOpen(false);
+    setError('Google registration failed. Please try again or create an account with email.');
   };
 
   return (
@@ -120,6 +144,25 @@ const RegisterPage = () => {
             {error}
           </div>
         )}
+
+        {/* Continue with Google Button */}
+        <button
+          type="button"
+          id="btn-google-auth-register"
+          className="btn-google"
+          onClick={() => {
+            setError('');
+            setIsGoogleModalOpen(true);
+          }}
+          disabled={loading || googleLoading}
+        >
+          <GoogleIcon size={20} />
+          <span>{googleLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
+        </button>
+
+        <div className="auth-divider">
+          <span>or register with email</span>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -235,6 +278,15 @@ const RegisterPage = () => {
           </Link>
         </div>
       </div>
+
+      {/* Google Authentication Modal */}
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSelectAccount={handleGoogleSelectAccount}
+        onSimulateError={handleGoogleSimulateError}
+        loading={googleLoading}
+      />
     </div>
   );
 };

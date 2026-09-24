@@ -76,6 +76,22 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
+  const loginWithGoogle = async (googleData) => {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(googleData)
+    });
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.message || 'Google authentication failed');
+    }
+    localStorage.setItem('token', data.token);
+    setToken(data.token);
+    setUser(data.user);
+    return data.user;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -93,6 +109,7 @@ export const AuthProvider = ({ children }) => {
         isAdmin,
         login,
         register,
+        loginWithGoogle,
         logout
       }}
     >
