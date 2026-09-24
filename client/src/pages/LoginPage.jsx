@@ -62,6 +62,53 @@ const LoginPage = () => {
     }
   };
 
+  const handleGoogleClick = () => {
+    setError('');
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (clientId && window.google?.accounts?.oauth2) {
+      setGoogleLoading(true);
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              setGoogleLoading(false);
+              setError(tokenResponse.error_description || 'Google sign-in was cancelled or failed.');
+              return;
+            }
+            try {
+              const user = await loginWithGoogle({ accessToken: tokenResponse.access_token });
+              if (user.role === 'admin') {
+                navigate('/admin/blogs');
+              } else {
+                navigate(from === '/login' ? '/' : from);
+              }
+            } catch (err) {
+              setError(err.message || 'Google authentication failed.');
+            } finally {
+              setGoogleLoading(false);
+            }
+          },
+          error_callback: (err) => {
+            setGoogleLoading(false);
+            if (err && err.type !== 'popup_closed') {
+              setError('Failed to initialize Google Sign-In.');
+            }
+          }
+        });
+        tokenClient.requestAccessToken();
+        return;
+      } catch (err) {
+        console.error('Error invoking Google OAuth:', err);
+        setGoogleLoading(false);
+      }
+    }
+
+    setIsGoogleModalOpen(true);
+  };
+
   const handleGoogleSimulateError = () => {
     setIsGoogleModalOpen(false);
     setError('Google authentication failed. Please try again or sign in with email.');
@@ -115,10 +162,7 @@ const LoginPage = () => {
           type="button"
           id="btn-google-auth-login"
           className="btn-google"
-          onClick={() => {
-            setError('');
-            setIsGoogleModalOpen(true);
-          }}
+          onClick={handleGoogleClick}
           disabled={loading || googleLoading}
         >
           <GoogleIcon size={20} />

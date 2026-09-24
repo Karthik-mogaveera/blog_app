@@ -168,7 +168,57 @@ router.post('/login', async (req, res) => {
 // @access  Public
 router.post('/google', async (req, res) => {
   try {
-    const { googleId, email, name, avatar } = req.body;
+    let { googleId, email, name, avatar, accessToken, credential } = req.body;
+
+    // Verify real Google OAuth Access Token if provided
+    if (accessToken) {
+      try {
+        const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const googleUser = await googleRes.json();
+        if (googleUser && (googleUser.sub || googleUser.id)) {
+          googleId = googleUser.sub || googleUser.id;
+          email = googleUser.email;
+          name = googleUser.name || `${googleUser.given_name || ''} ${googleUser.family_name || ''}`.trim();
+          avatar = googleUser.picture;
+        } else {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid or expired Google OAuth access token.'
+          });
+        }
+      } catch (tokenErr) {
+        console.error('Google access token verification failed:', tokenErr);
+        return res.status(401).json({
+          success: false,
+          message: 'Failed to verify Google access token with Google services.'
+        });
+      }
+    } else if (credential) {
+      // Verify real Google ID Token if provided
+      try {
+        const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+        const googleUser = await googleRes.json();
+        if (googleUser && googleUser.sub) {
+          googleId = googleUser.sub;
+          email = googleUser.email;
+          name = googleUser.name;
+          avatar = googleUser.picture;
+        } else {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid or expired Google credential token.'
+          });
+        }
+      } catch (tokenErr) {
+        console.error('Google ID token verification failed:', tokenErr);
+        return res.status(401).json({
+          success: false,
+          message: 'Failed to verify Google ID token with Google services.'
+        });
+      }
+    }
 
     if (!email && !googleId) {
       return res.status(400).json({

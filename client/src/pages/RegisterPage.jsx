@@ -72,6 +72,49 @@ const RegisterPage = () => {
     }
   };
 
+  const handleGoogleClick = () => {
+    setError('');
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (clientId && window.google?.accounts?.oauth2) {
+      setGoogleLoading(true);
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              setGoogleLoading(false);
+              setError(tokenResponse.error_description || 'Google sign-in was cancelled or failed.');
+              return;
+            }
+            try {
+              await loginWithGoogle({ accessToken: tokenResponse.access_token });
+              navigate('/');
+            } catch (err) {
+              setError(err.message || 'Google registration failed.');
+            } finally {
+              setGoogleLoading(false);
+            }
+          },
+          error_callback: (err) => {
+            setGoogleLoading(false);
+            if (err && err.type !== 'popup_closed') {
+              setError('Failed to initialize Google Sign-In.');
+            }
+          }
+        });
+        tokenClient.requestAccessToken();
+        return;
+      } catch (err) {
+        console.error('Error invoking Google OAuth:', err);
+        setGoogleLoading(false);
+      }
+    }
+
+    setIsGoogleModalOpen(true);
+  };
+
   const handleGoogleSimulateError = () => {
     setIsGoogleModalOpen(false);
     setError('Google registration failed. Please try again or create an account with email.');
@@ -150,10 +193,7 @@ const RegisterPage = () => {
           type="button"
           id="btn-google-auth-register"
           className="btn-google"
-          onClick={() => {
-            setError('');
-            setIsGoogleModalOpen(true);
-          }}
+          onClick={handleGoogleClick}
           disabled={loading || googleLoading}
         >
           <GoogleIcon size={20} />
