@@ -163,6 +163,112 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/google
+// @desc    Authenticate or register a reader using Google account
+// @access  Public
+router.post('/google', async (req, res) => {
+  try {
+    const { googleId, email, name, avatar } = req.body;
+
+    if (!email && !googleId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google authentication requires email or Google ID.'
+      });
+    }
+
+    const cleanEmail = email ? email.trim().toLowerCase() : null;
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (cleanEmail && !emailRegex.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email address provided by Google account.'
+      });
+    }
+
+    // 1. Look up user by googleId or email
+    const queryConditions = [];
+    if (googleId) queryConditions.push({ googleId });
+    if (cleanEmail) queryConditions.push({ email: cleanEmail });
+
+    let user = await User.findOne({ $or: queryConditions });
+
+    if (user) {
+      // If user exists, link googleId and avatar if not present
+      let updated = false;
+      if (googleId && !user.googleId) {
+        user.googleId = googleId;
+        updated = true;
+      }
+      if (avatar && !user.avatar) {
+        user.avatar = avatar;
+        updated = true;
+      }
+      if (updated) {
+        await user.save();
+      }
+
+      const token = generateToken(user);
+      return res.status(200).json({
+        success: true,
+        message: `Welcome back, ${user.username}!`,
+        token,
+        user
+      });
+    }
+
+    // 2. New user registration
+    if (!cleanEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email address is required to register a new Google account.'
+      });
+    }
+
+    // Determine initial candidate username
+    let baseUsername = '';
+    if (name && name.trim()) {
+      baseUsername = name.trim().replace(/[^a-zA-Z0-9_]/g, '');
+    }
+    if (!baseUsername || baseUsername.length < 3) {
+      baseUsername = cleanEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '');
+    }
+    if (!baseUsername || baseUsername.length < 3) {
+      baseUsername = 'reader_' + Math.floor(1000 + Math.random() * 9000);
+    }
+    baseUsername = baseUsername.slice(0, 20);
+
+    // Ensure username uniqueness
+    let candidateUsername = baseUsername;
+    let suffix = 1;
+    while (await User.findOne({ username: candidateUsername })) {
+      candidateUsername = `${baseUsername.slice(0, 16)}_${suffix++}`;
+    }
+
+    user = await User.create({
+      username: candidateUsername,
+      email: cleanEmail,
+      googleId: googleId || `google_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+      avatar: avatar || null,
+      role: 'reader'
+    });
+
+    const token = generateToken(user);
+    return res.status(201).json({
+      success: true,
+      message: 'Google registration successful. Welcome to the platform!',
+      token,
+      user
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during Google authentication. Please try again later.'
+    });
+  }
+});
+
 // @route   GET /api/auth/me
 // @desc    Get currently authenticated user details
 // @access  Private

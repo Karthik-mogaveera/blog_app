@@ -1123,3 +1123,98 @@ test.describe('Sprint 7: Admin UI Enhancements & Cover Photo Upload', () => {
   });
 });
 
+test.describe('GitHub Issue #12: Continue with Google for Reader Authentication', () => {
+  test('Positive Case 1 & 3: Google reader registration and new account creation', async ({ page }) => {
+    await page.goto('/register');
+    const googleBtn = page.locator('#btn-google-auth-register');
+    await expect(googleBtn).toBeVisible();
+    await expect(googleBtn).toContainText('Continue with Google');
+
+    // Click Google Auth button
+    await googleBtn.click();
+    const modal = page.locator('#google-auth-modal');
+    await expect(modal).toBeVisible();
+
+    // Use custom Google account
+    await page.click('#google-account-custom-toggle');
+    const uniqueEmail = `google_reader_${Date.now()}@gmail.com`;
+    await page.fill('#google-custom-email', uniqueEmail);
+    await page.fill('#google-custom-name', 'Google Reader Pro');
+    await page.click('#btn-google-custom-submit');
+
+    // Verification: Reader account is created, user redirected to Home
+    await page.waitForURL('/');
+    await expect(page.locator('#nav-user-pill')).toBeVisible();
+
+    // Logout
+    await page.click('#nav-btn-logout');
+    await expect(page.locator('#nav-btn-login')).toBeVisible();
+  });
+
+  test('Positive Case 2 & Negative Case 3: Existing reader Google login and repeated login idempotency', async ({ page }) => {
+    // First login with Alex Johnson account
+    await page.goto('/login');
+    const googleBtn = page.locator('#btn-google-auth-login');
+    await expect(googleBtn).toBeVisible();
+    await expect(googleBtn).toContainText('Continue with Google');
+
+    await googleBtn.click();
+    const modal = page.locator('#google-auth-modal');
+    await expect(modal).toBeVisible();
+
+    // Select Alex account
+    await page.click('#google-account-alex');
+    await page.waitForURL('/');
+    await expect(page.locator('#nav-user-pill')).toBeVisible();
+
+    // Logout
+    await page.click('#nav-btn-logout');
+    await expect(page.locator('#nav-btn-login')).toBeVisible();
+
+    // Repeated login with the same Alex account must succeed idempotently without duplicate account error
+    await page.goto('/login');
+    await page.click('#btn-google-auth-login');
+    await page.click('#google-account-alex');
+    await page.waitForURL('/');
+    await expect(page.locator('#nav-user-pill')).toBeVisible();
+
+    // Cleanup
+    await page.click('#nav-btn-logout');
+  });
+
+  test('Negative Case 1: Cancel Google authentication returns safely to page', async ({ page }) => {
+    await page.goto('/login');
+    await page.click('#btn-google-auth-login');
+    const modal = page.locator('#google-auth-modal');
+    await expect(modal).toBeVisible();
+
+    // Click Cancel
+    await page.click('#btn-google-cancel');
+    await expect(modal).toBeHidden();
+
+    // Check that user is still on /login, page is interactive, no crash
+    await expect(page.locator('#login-identifier')).toBeVisible();
+    await expect(page.locator('#btn-google-auth-login')).toBeVisible();
+  });
+
+  test('Negative Case 2: Failed Google authentication displays error banner', async ({ page }) => {
+    await page.goto('/login');
+    await page.click('#btn-google-auth-login');
+    const modal = page.locator('#google-auth-modal');
+    await expect(modal).toBeVisible();
+
+    // Simulate failure
+    await page.click('#btn-google-simulate-fail');
+    await expect(modal).toBeHidden();
+
+    // Error banner should be displayed
+    const errorBanner = page.locator('#login-error-banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText('Google authentication failed');
+
+    // User is NOT logged in
+    await expect(page.locator('#nav-btn-login')).toBeVisible();
+  });
+});
+
+
