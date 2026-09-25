@@ -11,6 +11,7 @@ import HomePage from './pages/HomePage';
 import BlogDetailPage from './pages/BlogDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import BlogEditorPage from './pages/BlogEditorPage';
 import AdminModerationPage from './pages/AdminModerationPage';
@@ -52,6 +53,7 @@ function App() {
                 {/* Auth Routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
                 {/* Admin Studio Routes */}
                 <Route
