@@ -15,7 +15,28 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import BlogEditorPage from './pages/BlogEditorPage';
 import AdminModerationPage from './pages/AdminModerationPage';
+import CreateBlogPage from './pages/CreateBlogPage';
+import MyStoriesPage from './pages/MyStoriesPage';
 import NotFoundPage from './pages/NotFoundPage';
+
+// Protected route wrapper for authenticated readers and admins
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '6rem 0', textAlign: 'center' }}>
+        <p className="text-muted">Loading session...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
 
 // Protected route wrapper for Admin-only areas
 const AdminRoute = ({ children }) => {
@@ -49,6 +70,25 @@ function App() {
                 {/* Public Catalog & Reading Routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/blog/:id" element={<BlogDetailPage />} />
+
+                {/* Reader Story Creation & Dashboard Routes */}
+                <Route
+                  path="/create-blog"
+                  element={
+                    <ProtectedRoute>
+                      <CreateBlogPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/new-story" element={<Navigate to="/create-blog" replace />} />
+                <Route
+                  path="/my-stories"
+                  element={
+                    <ProtectedRoute>
+                      <MyStoriesPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Auth Routes */}
                 <Route path="/login" element={<LoginPage />} />

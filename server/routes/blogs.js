@@ -157,9 +157,10 @@ router.get('/:id', optionalAuth, async (req, res) => {
       });
     }
 
-    // Edge Case #21: Strict 404 for drafts/unpublished if not Admin
+    // Strict 404 for drafts/unpublished if not Admin or the author
     if (blog.status !== 'published') {
-      if (!req.user || req.user.role !== 'admin') {
+      const isOwner = req.user && ((blog.authorId && blog.authorId.equals(req.user._id)) || blog.authorName === req.user.username);
+      if (!req.user || (req.user.role !== 'admin' && !isOwner)) {
         return res.status(404).json({
           success: false,
           message: 'Article not found.'
@@ -197,26 +198,82 @@ router.get('/:id', optionalAuth, async (req, res) => {
   }
 });
 
+// @route   GET /api/blogs/me/stories
+// @desc    Get articles authored by the current logged-in user
+// @access  Authenticated (Reader or Admin)
+router.get('/me/stories', authenticate, async (req, res) => {
+  try {
+    const rawBlogs = await Blog.find({
+      $or: [
+        { authorId: req.user._id },
+        { authorName: req.user.username }
+      ]
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const blogIds = rawBlogs.map((b) => b._id);
+    const [likesAgg, commentsAgg] = await Promise.all([
+      Like.aggregate([
+        { $match: { blogId: { $in: blogIds } } },
+        { $group: { _id: '$blogId', count: { $sum: 1 } } }
+      ]),
+      Comment.aggregate([
+        { $match: { blogId: { $in: blogIds } } },
+        { $group: { _id: '$blogId', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const likesMap = new Map(likesAgg.map((l) => [l._id.toString(), l.count]));
+    const commentsMap = new Map(commentsAgg.map((c) => [c._id.toString(), c.count]));
+
+    const blogs = rawBlogs.map((b) => ({
+      ...b,
+      id: b._id,
+      likeCount: likesMap.get(b._id.toString()) || 0,
+      commentCount: commentsMap.get(b._id.toString()) || 0
+    }));
+
+    return res.status(200).json({
+      success: true,
+      blogs
+    });
+  } catch (error) {
+    console.error('Error fetching reader stories:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch your articles.'
+    });
+  }
+});
+
 // @route   POST /api/blogs
-// @desc    Create a new blog article
-// @access  Admin Only
-router.post('/', authenticate, requireAdmin, async (req, res) => {
+// @desc    Create a new blog article (Admin or Reader)
+// @access  Authenticated
+router.post('/', authenticate, async (req, res) => {
   try {
     const { title, content, authorName, category, tags, coverImage, status } = req.body;
 
-    if (!title || !content) {
+    if (!title || !title.trim() || !content || !content.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Title and content are required.'
       });
     }
 
+    const authorNameFinal = req.user.role === 'admin'
+      ? (authorName && authorName.trim() ? authorName.trim() : (req.user.username || 'Admin'))
+      : req.user.username;
+
+    const authorRole = req.user.role === 'admin' ? 'admin' : 'reader';
     const blogStatus = status === 'published' ? 'published' : 'draft';
 
     const blog = await Blog.create({
       title: title.trim(),
-      content,
-      authorName: authorName && authorName.trim() ? authorName.trim() : req.user.username,
+      content: content.trim(),
+      authorName: authorNameFinal,
+      authorId: req.user._id,
+      authorRole,
       category: category || 'General',
       tags: tags || [],
       coverImage: coverImage ? coverImage.trim() : '',
@@ -239,9 +296,9 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
 });
 
 // @route   PUT /api/blogs/:id
-// @desc    Update an existing blog article
-// @access  Admin Only
-router.put('/:id', authenticate, requireAdmin, async (req, res) => {
+// @desc    Update an existing blog article (Admin or Owner)
+// @access  Authenticated
+router.put('/:id', authenticate, async (req, res) => {
   try {
     const { title, content, authorName, category, tags, coverImage, status } = req.body;
 
@@ -253,9 +310,17 @@ router.put('/:id', authenticate, requireAdmin, async (req, res) => {
       });
     }
 
+    const isOwner = (blog.authorId && blog.authorId.equals(req.user._id)) || (blog.authorName === req.user.username);
+    if (req.user.role !== 'admin' && !isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized. You can only edit your own articles.'
+      });
+    }
+
     if (title) blog.title = title.trim();
-    if (content) blog.content = content;
-    if (authorName) blog.authorName = authorName.trim();
+    if (content) blog.content = content.trim();
+    if (authorName && req.user.role === 'admin') blog.authorName = authorName.trim();
     if (category) blog.category = category;
     if (tags !== undefined) blog.tags = tags;
     if (coverImage !== undefined) blog.coverImage = coverImage.trim();
@@ -285,14 +350,22 @@ router.put('/:id', authenticate, requireAdmin, async (req, res) => {
 
 // @route   PATCH /api/blogs/:id/publish
 // @desc    Toggle blog publication status (Publish / Unpublish)
-// @access  Admin Only
-router.patch('/:id/publish', authenticate, requireAdmin, async (req, res) => {
+// @access  Admin or Owner
+router.patch('/:id/publish', authenticate, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
       return res.status(404).json({
         success: false,
         message: 'Article not found.'
+      });
+    }
+
+    const isOwner = (blog.authorId && blog.authorId.equals(req.user._id)) || (blog.authorName === req.user.username);
+    if (req.user.role !== 'admin' && !isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized. You can only manage publication of your own articles.'
       });
     }
 
@@ -321,14 +394,22 @@ router.patch('/:id/publish', authenticate, requireAdmin, async (req, res) => {
 
 // @route   DELETE /api/blogs/:id
 // @desc    Permanently delete blog post and cascade-delete all comments, replies, and likes
-// @access  Admin Only
-router.delete('/:id', authenticate, requireAdmin, async (req, res) => {
+// @access  Admin or Owner
+router.delete('/:id', authenticate, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
       return res.status(404).json({
         success: false,
         message: 'Article not found.'
+      });
+    }
+
+    const isOwner = (blog.authorId && blog.authorId.equals(req.user._id)) || (blog.authorName === req.user.username);
+    if (req.user.role !== 'admin' && !isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized. You can only delete your own articles.'
       });
     }
 

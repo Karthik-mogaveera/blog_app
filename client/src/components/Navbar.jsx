@@ -15,7 +15,8 @@ import {
   Sun,
   Moon,
   Menu,
-  X
+  X,
+  PenSquare
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -78,6 +79,27 @@ const Navbar = () => {
               >
                 <ShieldCheck size={16} />
                 Moderation
+              </NavLink>
+            </>
+          )}
+
+          {user && (
+            <>
+              <NavLink
+                to="/create-blog"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                id="nav-link-write"
+              >
+                <PenSquare size={16} />
+                Write
+              </NavLink>
+              <NavLink
+                to="/my-stories"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                id="nav-link-my-stories"
+              >
+                <BookOpen size={16} />
+                My Stories
               </NavLink>
             </>
           )}
@@ -208,6 +230,29 @@ const Navbar = () => {
               >
                 <ShieldCheck size={18} />
                 <span>Moderation</span>
+              </NavLink>
+            </>
+          )}
+
+          {user && (
+            <>
+              <NavLink
+                to="/create-blog"
+                className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
+                id="nav-mobile-link-write"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <PenSquare size={18} />
+                <span>Write Story</span>
+              </NavLink>
+              <NavLink
+                to="/my-stories"
+                className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
+                id="nav-mobile-link-my-stories"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <BookOpen size={18} />
+                <span>My Stories</span>
               </NavLink>
             </>
           )}
