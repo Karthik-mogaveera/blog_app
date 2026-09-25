@@ -4,9 +4,9 @@
 
 - **Scrum Master & Architect:** Full-Stack Architect (25 Years Experience)
 - **Methodology:** Agile / Issue-Driven Scrum with strict Playwright validation gates
-- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (17 Issues Total)
-- **Total Story Points:** 68 Points
-- **Status:** 100% Completed & Verified (All 17 Issues Closed)
+- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (19 Issues Total)
+- **Total Story Points:** 75 Points
+- **Status:** Issues #1 to #17 Closed (100% Verified); Issues #18 & #19 Pushed & Open
 
 ```
 +---------------------------------------------------------------------------------------------------------+
@@ -16,7 +16,8 @@
 | SPRINT 2: Blog Management Studio, Public Discovery & Pagination Engine (Issues #4 - #6)                 |
 | SPRINT 3: Engagement Engine (Likes, Multi-Level Comments, Moderation Hub) (Issues #7 - #9)               |
 | SPRINT 4: In-App Notification Center, Edge-Case Hardening & Final Verification (Issues #10 - #11)       |
-| EXTENDED TRACK: Google Auth, Email OTP, Reader Authoring, Bookmarks, Share & Rich Text (Issues #12 - #17)|
+| EXTENDED TRACK: Google Auth, Email OTP, Reader Authoring, Bookmarks, Share, Rich Text & Lifecycle       |
+|                 Controls (Issues #12 - #19)                                                             |
 +---------------------------------------------------------------------------------------------------------+
 ```
 
@@ -235,10 +236,32 @@
   - [x] Integrated across reader authoring, admin studio, and article reading view.
   - [x] 100% passing Playwright E2E tests covering positive and negative edge cases.
 
+### Issue #18: Restrict Reader Draft Posts from Admin Blog Studio
+- **Classification:** `backend`, `frontend`, `enhancement` | **Priority:** P1 | **Complexity:** Medium | **Effort:** 3 SP
+- **Status:** Open (Ready for Development) | **GitHub Issue:** [#18](https://github.com/Karthik-mogaveera/blog_app/issues/18)
+- **Summary:** Ensure that posts authored by readers that are currently in draft status (`status: 'draft'`) are strictly hidden from the Admin Blog Management Studio (`/admin/blogs`).
+- **Acceptance Criteria:**
+  - [ ] `GET /api/blogs/all` excludes reader draft posts from the query response when accessed by an Admin.
+  - [ ] Admin Blog Management Studio table only renders Admin-authored posts (all statuses) and Reader-authored posts that have achieved `published` status.
+  - [ ] Direct inspection or manipulation of `/admin/blogs` cannot expose or leak reader draft content.
+  - [ ] Readers continue to view and edit their own drafts in `/my-stories`.
+
+### Issue #19: Allow Readers to Change Blog Status (Publish and Unpublish) in My Stories
+- **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P0 | **Complexity:** Medium | **Effort:** 4 SP
+- **Status:** Open (Ready for Development) | **GitHub Issue:** [#19](https://github.com/Karthik-mogaveera/blog_app/issues/19)
+- **Summary:** Empower authenticated readers to change the status of their created articles between `draft` and `published` (and conversely `published` to unpublish) directly from the "My Stories" dashboard (`/my-stories`).
+- **Acceptance Criteria:**
+  - [ ] `PATCH /api/blogs/:id/publish` updated to allow authorization if the requester is an admin OR the authenticated author of the blog (`authorId.equals(req.user._id)`).
+  - [ ] Non-owners attempting to toggle status receive strict `403 Forbidden`.
+  - [ ] "My Stories" card UI includes prominent Status Badge (`Draft` / `Published`) and dynamic status action button (`Publish` for drafts, `Unpublish` for published blogs).
+  - [ ] Toggling status updates the state optimistically or synchronously with user feedback.
+  - [ ] When unpublished, the article is immediately hidden from the public catalog (`/`) and returns 404 to anonymous visitors.
+
 ---
 
 ## Final Project Status Summary
-- **Total Issues:** 17
-- **Total Sprints:** 4 Core Sprints + Extended Track
-- **Story Points Completed:** 68 / 68 (100%)
-- **All 17 GitHub Issues:** **CLOSED (`completed`)**
+- **Total Issues:** 19
+- **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #19)
+- **Story Points:** 75 Points Total (68 Completed, 7 In Progress/Queued)
+- **Issues #1 to #17:** **CLOSED (`completed`)**
+- **Issues #18 & #19:** **OPEN (Active on GitHub)**
