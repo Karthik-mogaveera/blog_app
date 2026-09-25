@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -9,7 +9,11 @@ import {
   Tag,
   FolderOpen,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  UploadCloud,
+  Link as LinkIcon,
+  CheckCircle2,
+  Trash2
 } from 'lucide-react';
 
 const CATEGORIES = ['General', 'Technology', 'Design', 'Lifestyle', 'Career', 'Tutorials'];
@@ -25,6 +29,95 @@ const CreateBlogPage = () => {
   const [coverImage, setCoverImage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Device Cover Upload State
+  const fileInputRef = useRef(null);
+  const [uploadMode, setUploadMode] = useState('file'); // 'file' | 'url'
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Handle Image File Selection & Compression
+  const processImageFile = (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (PNG, JPG, JPEG, WEBP, or GIF).');
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setError('Image file exceeds the 8MB maximum size limit.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const rawDataUrl = event.target.result;
+      const img = new Image();
+      img.onload = () => {
+        // Optimize image resolution to max 1600px width/height for fast loading
+        const maxWidth = 1600;
+        const maxHeight = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const optimizedDataUrl = canvas.toDataURL(mimeType, 0.88);
+
+        setCoverImage(optimizedDataUrl);
+        setUploadedFileName(file.name);
+        setError('');
+      };
+      img.onerror = () => {
+        setError('Failed to parse selected image file.');
+      };
+      img.src = rawDataUrl;
+    };
+    reader.onerror = () => {
+      setError('Error reading image file from system storage.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  const handleRemoveCover = () => {
+    setCoverImage('');
+    setUploadedFileName('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (targetStatus = 'published') => {
     setError('');
@@ -235,36 +328,231 @@ const CreateBlogPage = () => {
             </div>
           </div>
 
-          {/* Cover Image URL */}
+          {/* Cover Photo Section with Device Upload & URL Options */}
           <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-            <label
-              htmlFor="input-blog-cover-url"
-              className="form-label"
-              style={{ fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.65rem',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}
             >
-              <ImageIcon size={15} />
-              Cover Image URL (Optional)
-            </label>
-            <input
-              type="url"
-              id="input-blog-cover-url"
-              className="form-input"
-              placeholder="https://images.unsplash.com/photo-..."
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              disabled={loading}
-            />
+              <label
+                className="form-label"
+                style={{
+                  marginBottom: 0,
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <ImageIcon size={15} />
+                Cover Photo (Optional)
+              </label>
+
+              {/* Upload Mode Selector */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  background: 'var(--bg-surface)',
+                  padding: '3px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-medium)',
+                  gap: '2px'
+                }}
+              >
+                <button
+                  type="button"
+                  id="btn-mode-file"
+                  className={`btn btn-sm ${uploadMode === 'file' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setUploadMode('file')}
+                  style={{
+                    padding: '0.25rem 0.65rem',
+                    fontSize: '0.775rem',
+                    height: '28px',
+                    borderRadius: 'var(--radius-sm)'
+                  }}
+                >
+                  <UploadCloud size={13} />
+                  <span>Upload from Device</span>
+                </button>
+                <button
+                  type="button"
+                  id="btn-mode-url"
+                  className={`btn btn-sm ${uploadMode === 'url' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setUploadMode('url')}
+                  style={{
+                    padding: '0.25rem 0.65rem',
+                    fontSize: '0.775rem',
+                    height: '28px',
+                    borderRadius: 'var(--radius-sm)'
+                  }}
+                >
+                  <LinkIcon size={13} />
+                  <span>Image URL</span>
+                </button>
+              </div>
+            </div>
+
+            {uploadMode === 'file' ? (
+              <div>
+                {/* Hidden Native File Input */}
+                <input
+                  type="file"
+                  id="blog-cover-file-input"
+                  ref={fileInputRef}
+                  accept="image/png, image/jpeg, image/jpg, image/webp, image/gif"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+
+                {/* Dropzone Container */}
+                <div
+                  id="cover-dropzone-area"
+                  onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                  style={{
+                    border: isDragging ? '2px dashed var(--primary)' : '2px dashed var(--border-medium)',
+                    background: isDragging ? 'var(--primary-light)' : 'var(--bg-surface)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '2rem 1.5rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)'
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: 'var(--radius-full)',
+                      background: 'var(--primary-light)',
+                      color: 'var(--primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 0.75rem auto'
+                    }}
+                  >
+                    <UploadCloud size={22} />
+                  </div>
+                  <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                    Click to browse or drag & drop cover image from device
+                  </p>
+                  <p className="text-xs text-muted">
+                    Supports PNG, JPG, JPEG, WEBP, or GIF (Up to 8MB)
+                  </p>
+                  {uploadedFileName && (
+                    <div
+                      className="badge badge-Technology"
+                      style={{
+                        marginTop: '0.75rem',
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        padding: '0.3rem 0.75rem'
+                      }}
+                    >
+                      <CheckCircle2 size={13} /> {uploadedFileName}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="url"
+                  id="input-blog-cover-url"
+                  className="form-input"
+                  placeholder="https://images.unsplash.com/photo-..."
+                  value={coverImage.startsWith('data:') ? '' : coverImage}
+                  onChange={(e) => {
+                    setCoverImage(e.target.value);
+                    setUploadedFileName('');
+                  }}
+                  disabled={loading}
+                />
+                <span className="text-xs text-muted" style={{ marginTop: '0.35rem', display: 'block' }}>
+                  Paste any direct public image URL to use as the hero header.
+                </span>
+              </div>
+            )}
+
+            {/* Live Cover Photo Preview Card */}
             {coverImage && (
-              <div style={{ marginTop: '0.75rem', borderRadius: 'var(--radius-md)', overflow: 'hidden', maxHeight: '180px' }}>
+              <div
+                id="cover-photo-preview-card"
+                style={{
+                  position: 'relative',
+                  marginTop: '1rem',
+                  borderRadius: 'var(--radius-lg)',
+                  overflow: 'hidden',
+                  border: '1px solid var(--border-medium)',
+                  background: 'var(--bg-card)'
+                }}
+              >
                 <img
                   src={coverImage}
-                  alt="Cover preview"
-                  style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-                  onError={(e) => { e.target.style.display = 'none'; }}
+                  alt="Cover Preview"
+                  style={{
+                    width: '100%',
+                    height: '200px',
+                    objectFit: 'cover',
+                    display: 'block'
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
                 />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '0.75rem',
+                    right: '0.75rem',
+                    display: 'flex',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <button
+                    type="button"
+                    id="btn-remove-cover"
+                    className="btn btn-danger btn-sm"
+                    onClick={handleRemoveCover}
+                    title="Remove cover photo"
+                    style={{ padding: '0.35rem 0.75rem', backdropFilter: 'blur(8px)' }}
+                  >
+                    <Trash2 size={14} />
+                    <span>Remove Photo</span>
+                  </button>
+                </div>
+                <div
+                  style={{
+                    padding: '0.5rem 0.85rem',
+                    background: 'var(--bg-card)',
+                    borderTop: '1px solid var(--border-subtle)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.75rem',
+                    color: 'var(--text-secondary)'
+                  }}
+                >
+                  <span>Cover Photo Active</span>
+                  <span>{uploadedFileName || (coverImage.startsWith('data:') ? 'Uploaded from Device' : 'External URL')}</span>
+                </div>
               </div>
             )}
           </div>
+
 
           {/* Content Textarea */}
           <div className="form-group" style={{ marginBottom: '2rem' }}>
