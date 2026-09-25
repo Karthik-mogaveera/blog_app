@@ -1217,4 +1217,162 @@ test.describe('GitHub Issue #12: Continue with Google for Reader Authentication'
   });
 });
 
+test.describe('GitHub Issue #13: Add Forgot Password with Email OTP', () => {
+  test('Positive Case 1, 2, 3 & 4: Registered email OTP request, verification, password reset and login with new password', async ({ page }) => {
+    // 1. Register a reader account
+    const readerUser = `forgot_reader_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+    const oldPassword = 'OldPassword@123';
+    const newPassword = 'NewSecretPassword@456';
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', oldPassword);
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+    await page.click('#nav-btn-logout');
+
+    // 2. Navigate to Login and click "Forgot Password?"
+    await page.goto('/login');
+    const forgotLink = page.locator('#link-forgot-password');
+    await expect(forgotLink).toBeVisible();
+    await forgotLink.click();
+    await page.waitForURL('/forgot-password');
+
+    // 3. Step 1: Request OTP
+    await expect(page.locator('#forgot-email')).toBeVisible();
+    await page.fill('#forgot-email', readerEmail);
+    await page.click('#btn-request-otp');
+
+    // Step 2: Verify OTP
+    await expect(page.locator('#input-otp')).toBeVisible();
+    const otpValue = await page.locator('#input-otp').inputValue();
+    expect(otpValue).toBeTruthy();
+    expect(otpValue.length).toBe(6);
+
+    await page.click('#btn-verify-otp');
+
+    // Step 3: Set New Password
+    await expect(page.locator('#input-new-password')).toBeVisible();
+    await expect(page.locator('#input-confirm-password')).toBeVisible();
+    await page.fill('#input-new-password', newPassword);
+    await page.fill('#input-confirm-password', newPassword);
+    await page.click('#btn-reset-password');
+
+    // Step 4: Success confirmation screen
+    await expect(page.locator('#btn-go-to-login')).toBeVisible();
+    await page.click('#btn-go-to-login');
+    await page.waitForURL('/login');
+
+    // 4. Positive Case 4: Verify Old Password Fails and New Password Succeeds
+    await page.fill('#login-identifier', readerUser);
+    await page.fill('#login-password', oldPassword);
+    await page.click('#login-submit-btn');
+    await expect(page.locator('#login-error-banner')).toBeVisible();
+
+    // Now sign in with new password
+    await page.fill('#login-password', newPassword);
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/');
+    await expect(page.locator('#nav-user-pill')).toBeVisible();
+    await page.click('#nav-btn-logout');
+  });
+
+  test('Negative Case 1: Unregistered email displays error message', async ({ page }) => {
+    await page.goto('/forgot-password');
+    await page.fill('#forgot-email', 'nonexistent_reader_99999@example.com');
+    await page.click('#btn-request-otp');
+
+    const errorBanner = page.locator('#forgot-error-banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText('No account found with this email address');
+  });
+
+  test('Negative Case 2: Invalid OTP fails verification', async ({ page }) => {
+    const readerUser = `invalid_otp_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+    await page.click('#nav-btn-logout');
+
+    await page.goto('/forgot-password');
+    await page.fill('#forgot-email', readerEmail);
+    await page.click('#btn-request-otp');
+    await expect(page.locator('#input-otp')).toBeVisible();
+
+    // Enter wrong OTP
+    await page.fill('#input-otp', '000000');
+    await page.click('#btn-verify-otp');
+
+    const errorBanner = page.locator('#forgot-error-banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText('Invalid OTP code');
+  });
+
+  test('Negative Case 3: Mismatched passwords displays validation message', async ({ page }) => {
+    const readerUser = `mismatch_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+    await page.click('#nav-btn-logout');
+
+    await page.goto('/forgot-password');
+    await page.fill('#forgot-email', readerEmail);
+    await page.click('#btn-request-otp');
+    await expect(page.locator('#input-otp')).toBeVisible();
+    await page.click('#btn-verify-otp');
+
+    // Fill mismatched passwords
+    await expect(page.locator('#input-new-password')).toBeVisible();
+    await page.fill('#input-new-password', 'SecretPassword@1');
+    await page.fill('#input-confirm-password', 'SecretPassword@2');
+    await page.click('#btn-reset-password');
+
+    const errorBanner = page.locator('#forgot-error-banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText('Passwords do not match');
+  });
+
+  test('Negative Case 4: Empty or short password prevents submission', async ({ page }) => {
+    const readerUser = `shortpass_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+    await page.click('#nav-btn-logout');
+
+    await page.goto('/forgot-password');
+    await page.fill('#forgot-email', readerEmail);
+    await page.click('#btn-request-otp');
+    await expect(page.locator('#input-otp')).toBeVisible();
+    await page.click('#btn-verify-otp');
+
+    // Short password (< 6 chars)
+    await expect(page.locator('#input-new-password')).toBeVisible();
+    await page.fill('#input-new-password', '123');
+    await page.fill('#input-confirm-password', '123');
+    await page.click('#btn-reset-password');
+
+    const errorBanner = page.locator('#forgot-error-banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText('at least 6 characters long');
+  });
+});
+
+
 

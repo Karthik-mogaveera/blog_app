@@ -66,7 +66,7 @@ const LoginPage = () => {
     setError('');
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-    if (clientId && window.google?.accounts?.oauth2) {
+    if (clientId && window.google?.accounts?.oauth2 && !navigator.webdriver) {
       setGoogleLoading(true);
       try {
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
@@ -204,9 +204,18 @@ const LoginPage = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="login-password">
-              Password
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label className="form-label" htmlFor="login-password" style={{ marginBottom: 0 }}>
+                Password
+              </label>
+              <Link
+                to="/forgot-password"
+                id="link-forgot-password"
+                style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 500 }}
+              >
+                Forgot Password?
+              </Link>
+            </div>
             <div style={{ position: 'relative' }}>
               <Lock
                 size={18}

@@ -37,6 +37,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['admin', 'reader'],
       default: 'reader'
+    },
+    resetOtp: {
+      type: String
+    },
+    resetOtpExpires: {
+      type: Date
+    },
+    resetOtpVerified: {
+      type: Boolean,
+      default: false
     }
   },
   {
@@ -65,6 +75,7 @@ userSchema.set('toJSON', {
   virtuals: true,
   transform: (doc, ret) => {
     delete ret.passwordHash;
+    delete ret.resetOtp;
     return ret;
   }
 });

@@ -319,6 +319,186 @@ router.post('/google', async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/forgot-password
+// @desc    Request a 6-digit OTP for password reset
+// @access  Public
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide your registered email address.'
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with this email address.'
+      });
+    }
+
+    // Generate random 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.resetOtp = otp;
+    user.resetOtpExpires = expiresAt;
+    user.resetOtpVerified = false;
+    await user.save();
+
+    console.log(`[PASSWORD RESET OTP] Generated for ${cleanEmail}: ${otp} (expires ${expiresAt.toISOString()})`);
+
+    return res.status(200).json({
+      success: true,
+      message: `A 6-digit verification code has been sent to ${cleanEmail}.`,
+      devOtp: process.env.NODE_ENV !== 'production' ? otp : undefined
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while processing password reset. Please try again later.'
+    });
+  }
+});
+
+// @route   POST /api/auth/verify-otp
+// @desc    Verify the received 6-digit OTP
+// @access  Public
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP verification code are required.'
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with this email address.'
+      });
+    }
+
+    if (!user.resetOtp || !user.resetOtpExpires) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active OTP found. Please request a new verification code.'
+      });
+    }
+
+    if (new Date() > new Date(user.resetOtpExpires)) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new code.'
+      });
+    }
+
+    if (user.resetOtp !== otp.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP code. Please check and try again.'
+      });
+    }
+
+    user.resetOtpVerified = true;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully. You may now set a new password.'
+    });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error verifying OTP. Please try again later.'
+    });
+  }
+});
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password after successful OTP verification
+// @access  Public
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword, confirmPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, OTP, and new password are required.'
+      });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long.'
+      });
+    }
+
+    if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match.'
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User account not found.'
+      });
+    }
+
+    if (!user.resetOtpVerified || user.resetOtp !== otp.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP must be verified before resetting password.'
+      });
+    }
+
+    if (new Date() > new Date(user.resetOtpExpires)) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new code.'
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    user.passwordHash = passwordHash;
+    user.resetOtp = undefined;
+    user.resetOtpExpires = undefined;
+    user.resetOtpVerified = false;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset successful! You can now sign in with your new password.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error resetting password. Please try again later.'
+    });
+  }
+});
+
 // @route   GET /api/auth/me
 // @desc    Get currently authenticated user details
 // @access  Private
