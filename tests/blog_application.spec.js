@@ -1535,7 +1535,78 @@ test.describe('GitHub Issue #14: Allow Readers to Post Blogs', () => {
     });
     expect(putRes.status()).toBe(403);
   });
+
+  test('Cover Photo Upload from Device for Readers: Dropzone, file upload & publish verification', async ({ page }) => {
+    // 1. Register reader
+    const readerUser = `cover_reader_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Navigate to Write
+    await page.click('#nav-link-write');
+    await page.waitForURL('/create-blog');
+
+    // 3. Verify dropzone and mode toggles
+    const dropzone = page.locator('#cover-dropzone-area');
+    await expect(dropzone).toBeVisible();
+    await expect(dropzone).toContainText('Click to browse or drag & drop cover image from device');
+
+    const btnModeFile = page.locator('#btn-mode-file');
+    const btnModeUrl = page.locator('#btn-mode-url');
+    await expect(btnModeFile).toBeVisible();
+    await expect(btnModeUrl).toBeVisible();
+
+    // Toggle to URL and verify input, then toggle back to file
+    await btnModeUrl.click();
+    await expect(page.locator('#input-blog-cover-url')).toBeVisible();
+    await btnModeFile.click();
+    await expect(dropzone).toBeVisible();
+
+    // 4. Upload image from device
+    const testImageBuffer = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkWPjfDwAEfgHg2u54aAAAAABJRU5ErkJggg==',
+      'base64'
+    );
+    const fileInput = page.locator('#blog-cover-file-input');
+    await fileInput.setInputFiles({
+      name: 'reader-cover-photo.png',
+      mimeType: 'image/png',
+      buffer: testImageBuffer
+    });
+
+    // 5. Verify live preview card and remove button
+    const previewCard = page.locator('#cover-photo-preview-card');
+    await expect(previewCard).toBeVisible();
+    const removeBtn = page.locator('#btn-remove-cover');
+    await expect(removeBtn).toBeVisible();
+
+    // 6. Complete story details and publish
+    const storyTitle = `Reader Device Cover Story ${Date.now()}`;
+    await page.fill('#input-blog-title', storyTitle);
+    await page.fill('#input-blog-content', 'This story was written by a reader with a cover photo uploaded from their device.');
+    await page.click('#btn-publish-reader-blog');
+
+    // 7. Verify published detail page displays cover image
+    await page.waitForURL(/\/blog\/.+/);
+    await expect(page.locator('.article-title')).toHaveText(storyTitle);
+    const detailImg = page.locator('.article-cover-img');
+    await expect(detailImg).toBeVisible();
+
+    // 8. Verify homepage card renders cover image
+    await page.goto('/');
+    const blogCard = page.locator(`.blog-card:has-text("${storyTitle}")`);
+    await expect(blogCard).toBeVisible();
+    const cardImg = blogCard.locator('.blog-card-img');
+    await expect(cardImg).toBeVisible();
+  });
 });
+
 
 
 
