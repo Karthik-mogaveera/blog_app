@@ -31,7 +31,11 @@ const AdminDashboardPage = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setBlogs(data.blogs || []);
+        // Defense-in-depth: Exclude reader-authored draft posts
+        const visibleBlogs = (data.blogs || []).filter(
+          (b) => !(b.authorRole === 'reader' && b.status === 'draft')
+        );
+        setBlogs(visibleBlogs);
       } else {
         setError(data.message || 'Failed to load blogs');
       }

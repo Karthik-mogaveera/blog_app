@@ -103,11 +103,19 @@ router.get('/', async (req, res) => {
 });
 
 // @route   GET /api/blogs/admin/all
-// @desc    Get all blogs (drafts + published) for Admin management
+// @desc    Get blogs for Admin management (Admin drafts + all published blogs; reader drafts excluded)
 // @access  Admin Only
 router.get('/admin/all', authenticate, requireAdmin, async (req, res) => {
   try {
-    const rawBlogs = await Blog.find().sort({ createdAt: -1 }).lean();
+    // Admin must not be able to see readers' posts which are in draft status
+    const filter = {
+      $or: [
+        { status: 'published' },
+        { authorRole: { $ne: 'reader' } }
+      ]
+    };
+
+    const rawBlogs = await Blog.find(filter).sort({ createdAt: -1 }).lean();
 
     const blogIds = rawBlogs.map((b) => b._id);
     const [likesAgg, commentsAgg] = await Promise.all([
@@ -158,14 +166,25 @@ router.get('/:id', optionalAuth, async (req, res) => {
       });
     }
 
-    // Strict 404 for drafts/unpublished if not Admin or the author
+    // Strict 404 for drafts/unpublished if not authorized
     if (blog.status !== 'published') {
       const isOwner = req.user && ((blog.authorId && blog.authorId.equals(req.user._id)) || blog.authorName === req.user.username);
-      if (!req.user || (req.user.role !== 'admin' && !isOwner)) {
-        return res.status(404).json({
-          success: false,
-          message: 'Article not found.'
-        });
+      // Reader drafts can strictly only be viewed by the reader author (Admin cannot see reader drafts)
+      if (blog.authorRole === 'reader') {
+        if (!isOwner) {
+          return res.status(404).json({
+            success: false,
+            message: 'Article not found.'
+          });
+        }
+      } else {
+        // Admin drafts can be viewed by admin or owner
+        if (!req.user || (req.user.role !== 'admin' && !isOwner)) {
+          return res.status(404).json({
+            success: false,
+            message: 'Article not found.'
+          });
+        }
       }
     }
 
@@ -314,6 +333,15 @@ router.put('/:id', authenticate, async (req, res) => {
     }
 
     const isOwner = (blog.authorId && blog.authorId.equals(req.user._id)) || (blog.authorName === req.user.username);
+
+    // Reader drafts can strictly only be edited by the author
+    if (blog.status === 'draft' && blog.authorRole === 'reader' && !isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized. Reader drafts can only be edited by the author.'
+      });
+    }
+
     if (req.user.role !== 'admin' && !isOwner) {
       return res.status(403).json({
         success: false,

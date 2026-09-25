@@ -19,7 +19,7 @@ const CATEGORIES = ['Technology', 'Design', 'Lifestyle', 'Career', 'Tutorials', 
 const BlogEditorPage = () => {
   const { id } = useParams();
   const isEditing = Boolean(id);
-  const { token, user, isAdmin } = useAuth();
+  const { token, user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState('');
@@ -42,6 +42,8 @@ const BlogEditorPage = () => {
 
   // Fetch article if in Edit mode
   useEffect(() => {
+    if (authLoading) return;
+
     if (!isAdmin) {
       navigate('/login');
       return;
@@ -219,10 +221,24 @@ const BlogEditorPage = () => {
     }
   };
 
-  if (fetching) {
+  if (authLoading || fetching) {
     return (
       <div className="container" style={{ padding: '6rem 0', textAlign: 'center' }}>
         <p className="text-muted">Loading article editor...</p>
+      </div>
+    );
+  }
+
+  if (isEditing && error && !title) {
+    return (
+      <div className="container content-narrow" style={{ padding: '4rem 1.5rem 6rem' }}>
+        <div style={{ padding: '2.5rem', background: 'rgba(244, 63, 94, 0.12)', border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: 'var(--radius-lg)', textAlign: 'center' }} id="admin-editor-error-state">
+          <h3 style={{ color: '#fb7185', marginBottom: '0.75rem' }}>Unable to Access Article</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{error}</p>
+          <Link to="/admin/blogs" className="btn btn-primary" id="btn-back-studio">
+            <ArrowLeft size={16} /> Return to Blog Studio
+          </Link>
+        </div>
       </div>
     );
   }

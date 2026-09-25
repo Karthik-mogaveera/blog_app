@@ -238,13 +238,14 @@
 
 ### Issue #18: Restrict Reader Draft Posts from Admin Blog Studio
 - **Classification:** `backend`, `frontend`, `enhancement` | **Priority:** P1 | **Complexity:** Medium | **Effort:** 3 SP
-- **Status:** Open (Ready for Development) | **GitHub Issue:** [#18](https://github.com/Karthik-mogaveera/blog_app/issues/18)
+- **Status:** Completed (Branch `feature/issue-18-restrict-reader-drafts`) | **GitHub Issue:** [#18](https://github.com/Karthik-mogaveera/blog_app/issues/18)
 - **Summary:** Ensure that posts authored by readers that are currently in draft status (`status: 'draft'`) are strictly hidden from the Admin Blog Management Studio (`/admin/blogs`).
 - **Acceptance Criteria:**
-  - [ ] `GET /api/blogs/all` excludes reader draft posts from the query response when accessed by an Admin.
-  - [ ] Admin Blog Management Studio table only renders Admin-authored posts (all statuses) and Reader-authored posts that have achieved `published` status.
-  - [ ] Direct inspection or manipulation of `/admin/blogs` cannot expose or leak reader draft content.
-  - [ ] Readers continue to view and edit their own drafts in `/my-stories`.
+  - [x] `GET /api/blogs/admin/all` excludes reader draft posts from the query response when accessed by an Admin.
+  - [x] Admin Blog Management Studio table only renders Admin-authored posts (all statuses) and Reader-authored posts that have achieved `published` status.
+  - [x] Direct inspection or manipulation of `/admin/blogs` or `/api/blogs/:id` cannot expose or leak reader draft content to Admin.
+  - [x] Readers continue to view and edit their own drafts in `/my-stories`.
+  - [x] 100% verified via automated Playwright E2E testing suite covering positive paths and direct access edge cases.
 
 ### Issue #19: Allow Readers to Change Blog Status (Publish and Unpublish) in My Stories
 - **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P0 | **Complexity:** Medium | **Effort:** 4 SP
@@ -262,6 +263,6 @@
 ## Final Project Status Summary
 - **Total Issues:** 19
 - **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #19)
-- **Story Points:** 75 Points Total (68 Completed, 7 In Progress/Queued)
-- **Issues #1 to #17:** **CLOSED (`completed`)**
-- **Issues #18 & #19:** **OPEN (Active on GitHub)**
+- **Story Points:** 75 Points Total (71 Completed, 4 In Progress/Queued)
+- **Issues #1 to #18:** **CLOSED (`completed`)**
+- **Issue #19:** **OPEN (Active on GitHub)**

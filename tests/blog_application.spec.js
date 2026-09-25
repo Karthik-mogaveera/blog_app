@@ -2047,6 +2047,93 @@ test.describe('GitHub Issue #17: Add Rich Text Editor for Blog Content', () => {
   });
 });
 
+test.describe('Sprint 6: Issue #18 - Restrict Reader Draft Posts from Admin Blog Studio', () => {
+  test('Issue #18: Admin must not be able to see readers draft posts in blog studio, while reader drafts remain visible in My Stories and published reader posts appear in studio', async ({ page, request }) => {
+    // 1. Register a reader
+    const readerUser = `reader_author_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Reader authors a DRAFT blog
+    const draftTitle = `Private Reader Draft Post ${Date.now()}`;
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', draftTitle);
+    await page.fill('#input-blog-content', '<p>This is a confidential draft article by a reader.</p>');
+    await page.click('#btn-save-draft');
+    await page.waitForURL('/my-stories');
+
+    // Verify draft appears in reader's My Stories
+    await expect(page.locator('#my-stories-list')).toContainText(draftTitle);
+
+    // 3. Reader authors a PUBLISHED blog
+    const publishedTitle = `Public Reader Article ${Date.now()}`;
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', publishedTitle);
+    await page.fill('#input-blog-content', '<p>This is a publicly shared article by the reader.</p>');
+    await page.click('#btn-publish-reader-blog');
+    await page.waitForURL(/\/blog\/.+/);
+
+    // Save blog id of reader draft from API for direct route testing
+    const readerToken = await page.evaluate(() => localStorage.getItem('token'));
+    const storiesRes = await request.get('http://localhost:5000/api/blogs/me/stories', {
+      headers: { Authorization: `Bearer ${readerToken}` }
+    });
+    const storiesData = await storiesRes.json();
+    const draftBlog = storiesData.blogs.find((b) => b.title === draftTitle);
+    expect(draftBlog).toBeDefined();
+    const draftBlogId = draftBlog._id;
+
+    // 4. Logout reader and login as Admin
+    await page.click('#nav-btn-logout');
+
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', 'Admin@123456');
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/admin/blogs');
+
+    // 5. In Admin Blog Studio table:
+    // Published reader post MUST be visible
+    await expect(page.locator('#admin-blogs-table')).toContainText(publishedTitle);
+    // Draft reader post MUST NOT be visible!
+    await expect(page.locator('#admin-blogs-table')).not.toContainText(draftTitle);
+
+    // 6. Direct API test as Admin: GET /api/blogs/admin/all must NOT contain reader drafts
+    const adminToken = await page.evaluate(() => localStorage.getItem('token'));
+    const adminAllRes = await request.get('http://localhost:5000/api/blogs/admin/all', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const adminAllData = await adminAllRes.json();
+    expect(adminAllData.success).toBe(true);
+    const leakedDraft = adminAllData.blogs.find((b) => b.title === draftTitle);
+    expect(leakedDraft).toBeUndefined();
+
+    // 7. Direct URL access by Admin to reader's draft returns 404
+    const draftDetailRes = await request.get(`http://localhost:5000/api/blogs/${draftBlogId}`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    expect(draftDetailRes.status()).toBe(404);
+
+    // 8. Admin direct navigation to editor for reader draft displays clean error state
+    await page.goto(`/admin/blogs/edit/${draftBlogId}`);
+    await expect(page.locator('#admin-editor-error-state')).toBeVisible();
+
+    // 9. Admin's own draft posts continue to be visible in studio
+    const adminDraftTitle = `Admin Own Editorial Draft ${Date.now()}`;
+    await page.goto('/admin/blogs/new');
+    await page.fill('#blog-title-input', adminDraftTitle);
+    await page.fill('#blog-content-textarea', '<p>Admin internal draft content.</p>');
+    await page.click('#editor-save-draft-btn');
+    await page.waitForURL('/admin/blogs');
+    await expect(page.locator('#admin-blogs-table')).toContainText(adminDraftTitle);
+  });
+});
+
+
 
 
 
