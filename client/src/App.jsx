@@ -17,6 +17,7 @@ import BlogEditorPage from './pages/BlogEditorPage';
 import AdminModerationPage from './pages/AdminModerationPage';
 import CreateBlogPage from './pages/CreateBlogPage';
 import MyStoriesPage from './pages/MyStoriesPage';
+import SavedBlogsPage from './pages/SavedBlogsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Protected route wrapper for authenticated readers and admins
@@ -86,6 +87,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <MyStoriesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/saved"
+                  element={
+                    <ProtectedRoute>
+                      <SavedBlogsPage />
                     </ProtectedRoute>
                   }
                 />

@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import CommentTree from '../components/CommentTree';
+import ShareModal from '../components/ShareModal';
 import {
   Heart,
+  Bookmark,
   MessageSquare,
   Calendar,
   User,
@@ -27,6 +29,11 @@ const BlogDetailPage = () => {
   const [userHasLiked, setUserHasLiked] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
 
+  const [userHasSaved, setUserHasSaved] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveTooltip, setSaveTooltip] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   const [comments, setComments] = useState([]);
   const [newCommentText, setNewCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -46,6 +53,7 @@ const BlogDetailPage = () => {
         setBlog(data.blog);
         setLikeCount(data.blog.likeCount || 0);
         setUserHasLiked(data.blog.userHasLiked || false);
+        setUserHasSaved(data.blog.userHasSaved || false);
       } else {
         setError(data.message || 'Article not found');
       }
@@ -102,6 +110,40 @@ const BlogDetailPage = () => {
     } finally {
       setLikeLoading(false);
     }
+  };
+
+  // Handle Save / Bookmark Toggle
+  const handleSaveToggle = async () => {
+    if (!user) {
+      setSaveTooltip(true);
+      setTimeout(() => setSaveTooltip(false), 3500);
+      return;
+    }
+
+    setSaveLoading(true);
+    try {
+      const res = await fetch('/api/saved/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ blogId: blog._id || blog.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUserHasSaved(data.isSaved);
+      }
+    } catch (err) {
+      console.error('Error toggling save:', err);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  // Handle Share Click
+  const handleShareClick = () => {
+    setIsShareModalOpen(true);
   };
 
   // Submit Top-Level Comment
@@ -286,41 +328,94 @@ const BlogDetailPage = () => {
       )}
 
       {/* Like Bar & Community Stats */}
-      <section className="like-bar">
-        <div style={{ position: 'relative' }}>
+      <section className="like-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Like Button */}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className={`like-btn ${userHasLiked ? 'liked' : ''}`}
+              id="btn-like-toggle"
+              onClick={handleLikeToggle}
+              disabled={likeLoading}
+              title={user ? (userHasLiked ? 'Unlike article' : 'Like article') : 'Log in to like'}
+            >
+              <Heart size={18} fill={userHasLiked ? '#f43f5e' : 'none'} />
+              <span>{likeCount} {likeCount === 1 ? 'Like' : 'Likes'}</span>
+            </button>
+
+            {/* Guest Like Tooltip */}
+            {likeTooltip && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-45px',
+                  left: 0,
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-medium)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.4rem 0.85rem',
+                  fontSize: '0.8rem',
+                  color: 'var(--text-primary)',
+                  boxShadow: 'var(--shadow-lg)',
+                  whiteSpace: 'nowrap',
+                  zIndex: 10
+                }}
+              >
+                Please <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>log in</Link> to like this article.
+              </div>
+            )}
+          </div>
+
+          {/* Save Button */}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className={`save-btn ${userHasSaved ? 'saved' : ''}`}
+              id="btn-save-blog"
+              onClick={handleSaveToggle}
+              disabled={saveLoading}
+              title={user ? (userHasSaved ? 'Remove from saved' : 'Save article') : 'Log in to save'}
+            >
+              <Bookmark size={18} fill={userHasSaved ? 'currentColor' : 'none'} />
+              <span>{userHasSaved ? 'Saved' : 'Save'}</span>
+            </button>
+
+            {/* Guest Save Prompt Tooltip */}
+            {saveTooltip && (
+              <div
+                id="save-guest-prompt"
+                style={{
+                  position: 'absolute',
+                  top: '-45px',
+                  left: 0,
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-medium)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.4rem 0.85rem',
+                  fontSize: '0.8rem',
+                  color: 'var(--text-primary)',
+                  boxShadow: 'var(--shadow-lg)',
+                  whiteSpace: 'nowrap',
+                  zIndex: 10
+                }}
+              >
+                Please <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>log in</Link> to save this article.
+              </div>
+            )}
+          </div>
+
+          {/* Share Button */}
           <button
             type="button"
-            className={`like-btn ${userHasLiked ? 'liked' : ''}`}
-            id="btn-like-toggle"
-            onClick={handleLikeToggle}
-            disabled={likeLoading}
-            title={user ? (userHasLiked ? 'Unlike article' : 'Like article') : 'Log in to like'}
+            className="share-btn"
+            id="btn-share-blog"
+            onClick={handleShareClick}
+            title="Share article"
           >
-            <Heart size={18} fill={userHasLiked ? '#f43f5e' : 'none'} />
-            <span>{likeCount} {likeCount === 1 ? 'Like' : 'Likes'}</span>
+            <Share2 size={18} />
+            <span>Share</span>
           </button>
-
-          {/* Guest Tooltip */}
-          {likeTooltip && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '-45px',
-                left: 0,
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border-medium)',
-                borderRadius: 'var(--radius-md)',
-                padding: '0.4rem 0.85rem',
-                fontSize: '0.8rem',
-                color: 'var(--text-primary)',
-                boxShadow: 'var(--shadow-lg)',
-                whiteSpace: 'nowrap',
-                zIndex: 10
-              }}
-            >
-              Please <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>log in</Link> to like this article.
-            </div>
-          )}
         </div>
 
         <div className="flex items-center gap-2 text-muted text-sm">
@@ -328,6 +423,13 @@ const BlogDetailPage = () => {
           <span>{comments.length} Comments</span>
         </div>
       </section>
+
+      {/* Share Modal Dialog */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        blog={blog}
+      />
 
       {/* Discussions Section */}
       <section className="comment-section" id="discussion-section">

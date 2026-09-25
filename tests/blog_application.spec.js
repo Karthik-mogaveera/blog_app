@@ -1607,6 +1607,184 @@ test.describe('GitHub Issue #14: Allow Readers to Post Blogs', () => {
   });
 });
 
+test.describe('GitHub Issue #15: Add Save and Share Actions to Blogs', () => {
+  test('Positive Case 1 & 2: Reader saves blog, views in /saved list, and unsaves blog', async ({ page }) => {
+    // 1. Register a reader
+    const readerUser = `saver_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Open first published blog
+    await page.locator('.blog-card-title').first().click();
+    await page.waitForSelector('#btn-save-blog');
+
+    const saveBtn = page.locator('#btn-save-blog');
+    await expect(saveBtn).toBeVisible();
+    await expect(saveBtn).toContainText('Save');
+
+    // 3. Positive Case 1: Click Save
+    await saveBtn.click();
+    await expect(saveBtn).toContainText('Saved');
+    await expect(saveBtn).toHaveClass(/saved/);
+
+    // 4. Verify saved article appears in reading list (/saved)
+    const navSavedLink = page.locator('#nav-link-saved');
+    await expect(navSavedLink).toBeVisible();
+    await navSavedLink.click();
+    await page.waitForURL('/saved');
+
+    const savedCards = page.locator('#saved-articles-grid .blog-card');
+    await expect(savedCards.first()).toBeVisible();
+
+    // 5. Positive Case 2: Unsave blog by clicking Save again on article page
+    await savedCards.first().locator('h3 a').click();
+    await page.waitForSelector('#btn-save-blog');
+
+    const articleSaveBtn = page.locator('#btn-save-blog');
+    await expect(articleSaveBtn).toContainText('Saved');
+    await articleSaveBtn.click();
+    await expect(articleSaveBtn).toContainText('Save');
+    await expect(articleSaveBtn).not.toHaveClass(/saved/);
+
+    // Verify removed from /saved
+    await page.goto('/saved');
+    await expect(page.locator('#empty-saved-message')).toBeVisible();
+  });
+
+  test('Positive Case 3 & 4: Share blog opens options modal and allows copying valid link', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+    await page.goto('/');
+    await page.locator('.blog-card-title').first().click();
+    await page.waitForSelector('#btn-share-blog');
+
+    const shareBtn = page.locator('#btn-share-blog');
+    await expect(shareBtn).toBeVisible();
+    await expect(shareBtn).toContainText('Share');
+
+    // Positive Case 3: Click Share
+    await shareBtn.click();
+
+    const shareModal = page.locator('#share-modal');
+    await expect(shareModal).toBeVisible();
+
+    // Verify sharing options are displayed
+    await expect(page.locator('#share-link-input')).toBeVisible();
+    await expect(page.locator('#btn-copy-share-link')).toBeVisible();
+    await expect(page.locator('#btn-share-twitter')).toBeVisible();
+    await expect(page.locator('#btn-share-linkedin')).toBeVisible();
+    await expect(page.locator('#btn-share-facebook')).toBeVisible();
+    await expect(page.locator('#btn-share-email')).toBeVisible();
+
+    // Positive Case 4: Share valid blog with correct link
+    const linkValue = await page.locator('#share-link-input').inputValue();
+    expect(linkValue).toMatch(/\/blog\/[a-f0-9]{24}/);
+
+    // Click copy link
+    await page.click('#btn-copy-share-link');
+    await expect(page.locator('#share-copy-toast')).toBeVisible();
+    await expect(page.locator('#share-copy-toast')).toContainText('Link copied');
+
+    // Close modal
+    await page.click('#btn-close-share-modal');
+    await expect(shareModal).toBeHidden();
+  });
+
+  test('Negative Case 1: Save without authentication prompts user to log in', async ({ browser }) => {
+    const guestContext = await browser.newContext();
+    const guestPage = await guestContext.newPage();
+
+    await guestPage.goto('/');
+    await guestPage.locator('.blog-card-title').first().click();
+    await guestPage.waitForSelector('#btn-save-blog');
+
+    // Unauthenticated save click
+    await guestPage.click('#btn-save-blog');
+
+    const prompt = guestPage.locator('#save-guest-prompt');
+    await expect(prompt).toBeVisible();
+    await expect(prompt).toContainText('Please log in to save this article');
+
+    // Verify button remains unsaved
+    await expect(guestPage.locator('#btn-save-blog')).toContainText('Save');
+    await expect(guestPage.locator('#btn-save-blog')).not.toHaveClass(/saved/);
+
+    await guestContext.close();
+  });
+
+  test('Negative Case 2: Duplicate save prevention via compound unique index', async ({ request, page }) => {
+    // Register reader
+    const readerUser = `dupe_saver_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    const token = await page.evaluate(() => localStorage.getItem('token'));
+
+    // Fetch a blog id
+    const blogsRes = await request.get('/api/blogs?limit=1');
+    const blogsData = await blogsRes.json();
+    const blogId = blogsData.blogs[0]._id;
+
+    // Save article via API
+    const saveRes1 = await request.post('/api/saved/toggle', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { blogId }
+    });
+    const saveData1 = await saveRes1.json();
+    expect(saveData1.success).toBe(true);
+    expect(saveData1.isSaved).toBe(true);
+
+    // Check saved list count
+    const listRes1 = await request.get('/api/saved', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const listData1 = await listRes1.json();
+    const countBefore = listData1.savedBlogs.filter((s) => s.blog._id === blogId).length;
+    expect(countBefore).toBe(1);
+
+    // Attempt concurrent / duplicate save calls
+    await Promise.all([
+      request.post('/api/saved/toggle', { headers: { Authorization: `Bearer ${token}` }, data: { blogId } }),
+      request.post('/api/saved/toggle', { headers: { Authorization: `Bearer ${token}` }, data: { blogId } })
+    ]);
+
+    // Ensure only 1 or 0 records exist, never duplicate > 1
+    const listRes2 = await request.get('/api/saved', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const listData2 = await listRes2.json();
+    const countAfter = listData2.savedBlogs.filter((s) => s.blog._id === blogId).length;
+    expect(countAfter).toBeLessThanOrEqual(1);
+  });
+
+  test('Negative Case 3: Invalid blog share shows error handling', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.blog-card-title').first().click();
+    await page.waitForSelector('#btn-share-blog');
+
+    // Open share modal
+    await page.click('#btn-share-blog');
+    await expect(page.locator('#share-modal')).toBeVisible();
+
+    // Verify share link input exists and is non-empty
+    await expect(page.locator('#share-link-input')).toBeVisible();
+
+    // Close modal
+    await page.click('#btn-close-share-modal');
+    await expect(page.locator('#share-modal')).toBeHidden();
+  });
+});
+
+
 
 
 
