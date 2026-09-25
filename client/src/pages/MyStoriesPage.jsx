@@ -18,6 +18,7 @@ const MyStoriesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
 
   const fetchMyStories = useCallback(async () => {
     setLoading(true);
@@ -42,6 +43,32 @@ const MyStoriesPage = () => {
   useEffect(() => {
     fetchMyStories();
   }, [fetchMyStories]);
+
+  // Toggle Publish / Unpublish for reader story
+  const handleTogglePublish = async (blog) => {
+    const blogId = blog._id || blog.id;
+    setTogglingId(blogId);
+    try {
+      const res = await fetch(`/api/blogs/${blogId}/publish`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBlogs((prev) =>
+          prev.map((b) =>
+            (b._id === blogId || b.id === blogId) ? { ...b, status: data.status } : b
+          )
+        );
+      } else {
+        alert(data.message || 'Failed to update publication status');
+      }
+    } catch (err) {
+      alert('Network error updating status');
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const handleDelete = async (blogId) => {
     if (!window.confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
@@ -162,7 +189,10 @@ const MyStoriesPage = () => {
                   <span className={`badge badge-${blog.category || 'General'}`}>
                     {blog.category || 'General'}
                   </span>
-                  <span className={`badge ${blog.status === 'published' ? 'badge-published' : 'badge-draft'}`}>
+                  <span
+                    id={`story-status-badge-${blog._id || blog.id}`}
+                    className={`badge ${blog.status === 'published' ? 'badge-published' : 'badge-draft'}`}
+                  >
                     {blog.status === 'published' ? 'Published' : 'Draft'}
                   </span>
                   <span className="text-xs text-muted flex items-center gap-1">
@@ -197,9 +227,27 @@ const MyStoriesPage = () => {
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {/* Status Toggle Button (Draft <-> Published) */}
+                  <button
+                    type="button"
+                    id={`btn-publish-toggle-${blog._id || blog.id}`}
+                    className={`btn btn-sm ${blog.status === 'published' ? 'btn-outline' : 'btn-secondary'}`}
+                    onClick={() => handleTogglePublish(blog)}
+                    disabled={togglingId === (blog._id || blog.id) || deletingId === (blog._id || blog.id)}
+                    title={blog.status === 'published' ? 'Unpublish story (moves to draft)' : 'Publish story (makes visible to readers)'}
+                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
+                  >
+                    {togglingId === (blog._id || blog.id)
+                      ? 'Updating...'
+                      : blog.status === 'published'
+                      ? 'Unpublish'
+                      : 'Publish'}
+                  </button>
+
                   <Link
                     to={`/blog/${blog._id || blog.id}`}
+                    id={`btn-view-story-${blog._id || blog.id}`}
                     className="btn btn-ghost btn-sm"
                     title="View article"
                   >
@@ -210,7 +258,7 @@ const MyStoriesPage = () => {
                     id={`btn-delete-story-${blog._id || blog.id}`}
                     className="btn btn-ghost btn-sm text-accent-rose"
                     onClick={() => handleDelete(blog._id || blog.id)}
-                    disabled={deletingId === (blog._id || blog.id)}
+                    disabled={deletingId === (blog._id || blog.id) || togglingId === (blog._id || blog.id)}
                     title="Delete story"
                   >
                     <Trash2 size={16} />

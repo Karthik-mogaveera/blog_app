@@ -2133,6 +2133,98 @@ test.describe('Sprint 6: Issue #18 - Restrict Reader Draft Posts from Admin Blog
   });
 });
 
+test.describe('Sprint 7: Issue #19 - Allow Readers to Change Blog Status (Publish and Unpublish) in My Stories', () => {
+  test('Issue #19: Reader can toggle blog status from draft to published, and from published to unpublish in My Stories, with strict catalog sync and non-owner protection', async ({ page, request }) => {
+    // 1. Register reader
+    const readerUser = `reader_lifecycle_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Reader creates a DRAFT article
+    const storyTitle = `Lifecycle Test Story ${Date.now()}`;
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', storyTitle);
+    await page.fill('#input-blog-content', '<p>Draft content for lifecycle status change test.</p>');
+    await page.click('#btn-save-draft');
+    await page.waitForURL('/my-stories');
+
+    // Get story card and extract blogId
+    const storyCard = page.locator('.card', { hasText: storyTitle });
+    await expect(storyCard).toBeVisible();
+
+    const publishToggleBtn = storyCard.locator('button', { hasText: /Publish|Unpublish/ });
+    const statusBadge = storyCard.locator('.badge-draft, .badge-published');
+
+    // Verify initial status is Draft and button is Publish
+    await expect(statusBadge).toHaveText('Draft');
+    await expect(publishToggleBtn).toHaveText('Publish');
+
+    // Verify story is NOT visible in public catalog
+    await page.goto('/');
+    await expect(page.locator('#articles-container')).not.toContainText(storyTitle);
+
+    // 3. Return to My Stories and click "Publish"
+    await page.goto('/my-stories');
+    const storyCardOnStories = page.locator('.card', { hasText: storyTitle });
+    const toggleBtn = storyCardOnStories.locator('button', { hasText: 'Publish' });
+    await toggleBtn.click();
+
+    // Verify status changes to Published and button to Unpublish
+    await expect(storyCardOnStories.locator('.badge-published')).toHaveText('Published');
+    await expect(storyCardOnStories.locator('button', { hasText: 'Unpublish' })).toBeVisible();
+
+    // Verify story IS NOW visible in public catalog
+    await page.goto('/');
+    await expect(page.locator('#articles-container')).toContainText(storyTitle);
+
+    // 4. Return to My Stories and click "Unpublish"
+    await page.goto('/my-stories');
+    const storyCardToUnpublish = page.locator('.card', { hasText: storyTitle });
+    const unpublishBtn = storyCardToUnpublish.locator('button', { hasText: 'Unpublish' });
+    await unpublishBtn.click();
+
+    // Verify status changes back to Draft and button to Publish
+    await expect(storyCardToUnpublish.locator('.badge-draft')).toHaveText('Draft');
+    await expect(storyCardToUnpublish.locator('button', { hasText: 'Publish' })).toBeVisible();
+
+    // Verify story is NO LONGER in public catalog
+    await page.goto('/');
+    await expect(page.locator('#articles-container')).not.toContainText(storyTitle);
+
+    // Extract story blogId for negative test
+    const readerToken = await page.evaluate(() => localStorage.getItem('token'));
+    const storiesRes = await request.get('http://localhost:5000/api/blogs/me/stories', {
+      headers: { Authorization: `Bearer ${readerToken}` }
+    });
+    const storiesData = await storiesRes.json();
+    const blogObj = storiesData.blogs.find((b) => b.title === storyTitle);
+    expect(blogObj).toBeDefined();
+    const blogId = blogObj._id;
+
+    // 5. Negative Test: Another reader cannot toggle status of this blog
+    const otherUser = `intruder_${Date.now()}`;
+    const registerOtherRes = await request.post('http://localhost:5000/api/auth/register', {
+      data: {
+        username: otherUser,
+        email: `${otherUser}@example.com`,
+        password: 'ValidPass@123'
+      }
+    });
+    const otherData = await registerOtherRes.json();
+    const otherToken = otherData.token;
+
+    const unauthorizedToggleRes = await request.patch(`http://localhost:5000/api/blogs/${blogId}/publish`, {
+      headers: { Authorization: `Bearer ${otherToken}` }
+    });
+    expect(unauthorizedToggleRes.status()).toBe(403);
+  });
+});
+
+
 
 
 

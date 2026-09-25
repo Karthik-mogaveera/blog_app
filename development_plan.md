@@ -6,7 +6,7 @@
 - **Methodology:** Agile / Issue-Driven Scrum with strict Playwright validation gates
 - **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (19 Issues Total)
 - **Total Story Points:** 75 Points
-- **Status:** Issues #1 to #17 Closed (100% Verified); Issues #18 & #19 Pushed & Open
+- **Status:** 100% Completed & Verified (All 19 Issues Closed on GitHub)
 
 ```
 +---------------------------------------------------------------------------------------------------------+
@@ -249,20 +249,20 @@
 
 ### Issue #19: Allow Readers to Change Blog Status (Publish and Unpublish) in My Stories
 - **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P0 | **Complexity:** Medium | **Effort:** 4 SP
-- **Status:** Open (Ready for Development) | **GitHub Issue:** [#19](https://github.com/Karthik-mogaveera/blog_app/issues/19)
+- **Status:** Completed (Branch `feature/issue-19-reader-publish-toggle`) | **GitHub Issue:** [#19](https://github.com/Karthik-mogaveera/blog_app/issues/19)
 - **Summary:** Empower authenticated readers to change the status of their created articles between `draft` and `published` (and conversely `published` to unpublish) directly from the "My Stories" dashboard (`/my-stories`).
 - **Acceptance Criteria:**
-  - [ ] `PATCH /api/blogs/:id/publish` updated to allow authorization if the requester is an admin OR the authenticated author of the blog (`authorId.equals(req.user._id)`).
-  - [ ] Non-owners attempting to toggle status receive strict `403 Forbidden`.
-  - [ ] "My Stories" card UI includes prominent Status Badge (`Draft` / `Published`) and dynamic status action button (`Publish` for drafts, `Unpublish` for published blogs).
-  - [ ] Toggling status updates the state optimistically or synchronously with user feedback.
-  - [ ] When unpublished, the article is immediately hidden from the public catalog (`/`) and returns 404 to anonymous visitors.
+  - [x] `PATCH /api/blogs/:id/publish` allows authorization if the requester is an admin OR the authenticated author of the blog (`authorId.equals(req.user._id)`).
+  - [x] Non-owners attempting to toggle status receive strict `403 Forbidden`.
+  - [x] "My Stories" card UI includes prominent Status Badge (`Draft` / `Published`) and dynamic status action button (`Publish` for drafts, `Unpublish` for published blogs).
+  - [x] Toggling status updates the state synchronously with immediate user feedback.
+  - [x] When unpublished, the article is immediately hidden from the public catalog (`/`) and returns 404 to anonymous visitors.
+  - [x] 100% verified via automated Playwright E2E test suite covering publication toggle, public catalog synchronization, and non-owner access protection.
 
 ---
 
 ## Final Project Status Summary
 - **Total Issues:** 19
 - **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #19)
-- **Story Points:** 75 Points Total (71 Completed, 4 In Progress/Queued)
-- **Issues #1 to #18:** **CLOSED (`completed`)**
-- **Issue #19:** **OPEN (Active on GitHub)**
+- **Story Points:** 75 / 75 Points Completed (100%)
+- **All 19 GitHub Issues:** **CLOSED (`completed`)**
