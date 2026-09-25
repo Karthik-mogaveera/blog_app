@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { authenticate, JWT_SECRET } = require('../middleware/auth');
+const { sendOtpEmail } = require('../utils/mailer');
 
 const router = express.Router();
 
@@ -351,6 +352,13 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     console.log(`[PASSWORD RESET OTP] Generated for ${cleanEmail}: ${otp} (expires ${expiresAt.toISOString()})`);
+
+    // Dispatch email via Nodemailer
+    await sendOtpEmail({
+      to: cleanEmail,
+      otp,
+      username: user.username
+    });
 
     return res.status(200).json({
       success: true,
