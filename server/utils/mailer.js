@@ -14,18 +14,25 @@ function createTransporter() {
     return null;
   }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465, // true for 465, false for other ports (587, 25)
+  const transportConfig = {
     auth: {
       user,
       pass
-    },
-    tls: {
-      rejectUnauthorized: process.env.NODE_ENV === 'production'
     }
-  });
+  };
+
+  if (host.toLowerCase().includes('gmail')) {
+    transportConfig.service = 'gmail';
+  } else {
+    transportConfig.host = host;
+    transportConfig.port = port;
+    transportConfig.secure = port === 465;
+    transportConfig.tls = {
+      rejectUnauthorized: process.env.NODE_ENV === 'production'
+    };
+  }
+
+  return nodemailer.createTransport(transportConfig);
 }
 
 /**
