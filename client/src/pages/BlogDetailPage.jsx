@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import CommentTree from '../components/CommentTree';
 import ShareModal from '../components/ShareModal';
+import { renderRichContent } from '../utils/richText';
 import {
   Heart,
   Bookmark,
@@ -312,9 +313,12 @@ const BlogDetailPage = () => {
       </header>
 
       {/* Article Body Content */}
-      <article className="article-body-content" id="article-body-text">
-        {blog.content}
-      </article>
+      <article
+        className="article-body-content rich-text-content"
+        id="article-body-text"
+        dangerouslySetInnerHTML={{ __html: renderRichContent(blog.content) }}
+      />
+
 
       {/* Tags */}
       {blog.tags && blog.tags.length > 0 && (

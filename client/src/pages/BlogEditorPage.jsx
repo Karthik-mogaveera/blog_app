@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import RichTextEditor from '../components/RichTextEditor';
+import { isContentEmpty } from '../utils/richText';
 import {
   ArrowLeft,
   Save,
@@ -168,10 +170,11 @@ const BlogEditorPage = () => {
   const handleSave = async (desiredStatus) => {
     setError('');
 
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim() || isContentEmpty(content)) {
       setError('Please provide both an article title and content body.');
       return;
     }
+
 
     setLoading(true);
 
@@ -564,20 +567,21 @@ const BlogEditorPage = () => {
 
           {/* Content Body */}
           <div className="form-group">
-            <label className="form-label" htmlFor="blog-content-textarea">
+            <label className="form-label" htmlFor="blog-content-textarea" style={{ marginBottom: '0.5rem', display: 'block' }}>
               Article Body Content *
             </label>
-            <textarea
+            <RichTextEditor
               id="blog-content-textarea"
-              className="form-textarea"
-              placeholder="Write your article body here... Supports paragraphs, code snippets, and structured writing."
+              name="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={14}
-              style={{ minHeight: '280px', lineHeight: 1.7 }}
+              placeholder="Write your article body here... Supports rich formatting including bold, italic, headings, lists, and links."
+              disabled={loading}
+              minHeight="300px"
               required
             />
           </div>
+
         </form>
       </div>
     </div>

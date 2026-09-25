@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import RichTextEditor from '../components/RichTextEditor';
+import { isContentEmpty } from '../utils/richText';
 import {
   ArrowLeft,
   Send,
@@ -123,10 +125,11 @@ const CreateBlogPage = () => {
     setError('');
 
     // Strict validation for required fields
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim() || isContentEmpty(content)) {
       setError('Please provide both a title and content for your article.');
       return;
     }
+
 
     setLoading(true);
     try {
@@ -554,30 +557,27 @@ const CreateBlogPage = () => {
           </div>
 
 
-          {/* Content Textarea */}
+          {/* Rich Content Editor */}
           <div className="form-group" style={{ marginBottom: '2rem' }}>
             <label
               htmlFor="input-blog-content"
               className="form-label"
-              style={{ fontSize: '0.95rem', fontWeight: 600 }}
+              style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}
             >
               Story Content <span style={{ color: 'var(--accent-rose)' }}>*</span>
             </label>
-            <textarea
+            <RichTextEditor
               id="input-blog-content"
-              className="form-input"
-              placeholder="Write your story here... Share your thoughts, experience, or tutorials with the community."
-              rows={12}
+              name="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              style={{ resize: 'vertical', lineHeight: 1.6, padding: '1rem', minHeight: '260px' }}
+              placeholder="Write your story here... Supports rich formatting including bold, italic, headings, lists, and links."
               disabled={loading}
+              minHeight="280px"
+              required
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              <span>Supports plaintext and standard formatting</span>
-              <span>{content.trim() ? content.trim().split(/\s+/).length : 0} words</span>
-            </div>
           </div>
+
 
           {/* Bottom Submit Button */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>

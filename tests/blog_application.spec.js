@@ -1784,6 +1784,270 @@ test.describe('GitHub Issue #15: Add Save and Share Actions to Blogs', () => {
   });
 });
 
+test.describe('GitHub Issue #17: Add Rich Text Editor for Blog Content', () => {
+  test('Positive Case 1 & 2: Bold and Italic text formatting is preserved upon saving and viewing', async ({ page }) => {
+    // Register reader
+    const readerUser = `rich_reader_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // Navigate to Write Story
+    await page.click('#nav-link-write');
+    await page.waitForURL('/create-blog');
+
+    // Fill title
+    const storyTitle = `Formatting Test Story ${Date.now()}`;
+    await page.fill('#input-blog-title', storyTitle);
+
+    // Apply bold and italic content via editor
+    await page.fill('#input-blog-content', 'This is a sample story with <strong>bold headline emphasis</strong> and <em>subtle italic reflection</em> in the text.');
+
+    // Save/publish article
+    await page.click('#btn-publish-reader-blog');
+    await page.waitForURL(/\/blog\/.+/);
+
+    // Verify detail page has bold and italic formatting preserved
+    const articleBody = page.locator('#article-body-text');
+    await expect(articleBody).toBeVisible();
+
+    const boldEl = articleBody.locator('strong, b');
+    await expect(boldEl).toBeVisible();
+    await expect(boldEl).toContainText('bold headline emphasis');
+
+    const italicEl = articleBody.locator('em, i');
+    await expect(italicEl).toBeVisible();
+    await expect(italicEl).toContainText('subtle italic reflection');
+  });
+
+  test('Positive Case 3 & 4: Headings and ordered/unordered lists formatting is preserved', async ({ page }) => {
+    // Navigate to create story
+    await page.goto('/create-blog');
+    if (page.url().includes('/login')) {
+      const readerUser = `list_reader_${Date.now()}`;
+      await page.goto('/register');
+      await page.fill('#register-username', readerUser);
+      await page.fill('#register-email', `${readerUser}@example.com`);
+      await page.fill('#register-password', 'ValidPass@123');
+      await page.click('#register-submit-btn');
+      await page.waitForURL('/');
+      await page.click('#nav-link-write');
+      await page.waitForURL('/create-blog');
+    }
+
+    const storyTitle = `Headings and Lists Story ${Date.now()}`;
+    await page.fill('#input-blog-title', storyTitle);
+
+    const richContent = `<h2>Architecture Overview</h2>
+<p>Modern frontend systems require clean component hierarchies and decoupled data access.</p>
+<h3>Key Principles</h3>
+<ul>
+  <li>Component modularity</li>
+  <li>Declarative routing</li>
+  <li>Accessible user interactions</li>
+</ul>
+<h3>Implementation Steps</h3>
+<ol>
+  <li>Define schema</li>
+  <li>Implement REST endpoints</li>
+  <li>Validate with end-to-end tests</li>
+</ol>`;
+
+    await page.fill('#input-blog-content', richContent);
+    await page.click('#btn-publish-reader-blog');
+    await page.waitForURL(/\/blog\/.+/);
+
+    const articleBody = page.locator('#article-body-text');
+    await expect(articleBody.locator('h2')).toContainText('Architecture Overview');
+    await expect(articleBody.locator('h3').first()).toContainText('Key Principles');
+    await expect(articleBody.locator('ul li')).toHaveCount(3);
+    await expect(articleBody.locator('ol li')).toHaveCount(3);
+  });
+
+  test('Positive Case 5: Valid hyperlinks are created, displayed, and functional', async ({ page }) => {
+    const readerUser = `link_reader_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+    await page.goto('/create-blog');
+
+    const storyTitle = `Hyperlink Test Story ${Date.now()}`;
+    await page.fill('#input-blog-title', storyTitle);
+
+    // Open link modal via toolbar button
+    await page.click('#btn-format-link');
+    await expect(page.locator('#link-modal')).toBeVisible();
+
+    // Fill link modal fields
+    await page.fill('#input-link-text', 'Chronicle Documentation');
+    await page.fill('#input-link-url', 'https://example.com/docs');
+    await page.click('#btn-insert-link');
+    await expect(page.locator('#link-modal')).toBeHidden();
+
+    // Verify textarea has the formatted anchor tag
+    const contentVal = await page.locator('#input-blog-content').inputValue();
+    expect(contentVal).toContain('https://example.com/docs');
+
+    // Publish
+    await page.click('#btn-publish-reader-blog');
+    await page.waitForURL(/\/blog\/.+/);
+
+    // Verify link rendered in article body
+    const linkEl = page.locator('#article-body-text a');
+    await expect(linkEl).toBeVisible();
+    await expect(linkEl).toHaveAttribute('href', 'https://example.com/docs');
+    await expect(linkEl).toHaveAttribute('target', '_blank');
+    await expect(linkEl).toContainText('Chronicle Documentation');
+  });
+
+  test('Positive Case 6 & Negative Case 4: Edit existing formatted blog and retain rich formatting', async ({ page }) => {
+    // Admin login
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', 'Admin@123456');
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/admin/blogs');
+
+    // Create article with rich formatting as admin
+    const editTitle = `Rich Admin Article ${Date.now()}`;
+    await page.click('#admin-create-blog-btn');
+    await page.waitForURL('/admin/blogs/new');
+
+    await page.fill('#blog-title-input', editTitle);
+    await page.fill('#blog-content-textarea', '<h2>Initial Rich Header</h2><p>Initial content with <strong>bold text</strong>.</p>');
+    await page.click('#editor-publish-btn');
+    await page.waitForURL('/admin/blogs');
+
+    // Edit the newly created article
+    const editBtn = page.locator(`tr:has-text("${editTitle}") a[title="Edit article"]`);
+    await editBtn.click();
+    await page.waitForSelector('#blog-content-textarea');
+
+    // Verify existing formatting is retained in editor
+    const loadedContent = await page.locator('#blog-content-textarea').inputValue();
+    expect(loadedContent).toContain('<h2>Initial Rich Header</h2>');
+    expect(loadedContent).toContain('<strong>bold text</strong>');
+
+    // Append additional formatting
+    await page.fill('#blog-content-textarea', `${loadedContent}<blockquote>Updated editorial note with <em>italic style</em>.</blockquote>`);
+    await page.click('#editor-publish-btn');
+    await page.waitForURL('/admin/blogs');
+
+    // Preview article
+    const previewLink = page.locator(`tr:has-text("${editTitle}") a[title="Preview article"]`);
+    const previewHref = await previewLink.getAttribute('href');
+    await page.goto(previewHref);
+
+    // Verify both original and updated formatting are preserved
+    const body = page.locator('#article-body-text');
+    await expect(body.locator('h2')).toContainText('Initial Rich Header');
+    await expect(body.locator('strong')).toContainText('bold text');
+    await expect(body.locator('blockquote')).toContainText('Updated editorial note');
+    await expect(body.locator('em')).toContainText('italic style');
+  });
+
+  test('Negative Case 1: Empty content prevents submission', async ({ page }) => {
+    const readerUser = `empty_reader_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+    await page.goto('/create-blog');
+
+    // Enter title only, leaving content empty
+    await page.fill('#input-blog-title', 'Empty Content Attempt');
+    await page.fill('#input-blog-content', '   ');
+    await page.click('#btn-publish-reader-blog');
+
+    // Error banner should be displayed
+    await expect(page.locator('#create-blog-error-banner')).toBeVisible();
+    await expect(page.locator('#create-blog-error-banner')).toContainText('Please provide both a title and content');
+  });
+
+  test('Negative Case 2: Invalid link input is handled safely with validation banner', async ({ page }) => {
+    const readerUser = `invalid_link_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+    await page.goto('/create-blog');
+
+    // Open link modal
+    await page.click('#btn-format-link');
+    await expect(page.locator('#link-modal')).toBeVisible();
+
+    // 1. Submit empty URL
+    await page.fill('#input-link-url', '');
+    await page.click('#btn-insert-link');
+    await expect(page.locator('#link-error-banner')).toBeVisible();
+    await expect(page.locator('#link-error-banner')).toContainText('Please enter a valid web destination URL');
+
+    // 2. Submit dangerous XSS URL scheme
+    await page.fill('#input-link-url', 'javascript:alert("XSS")');
+    await page.click('#btn-insert-link');
+    await expect(page.locator('#link-error-banner')).toBeVisible();
+    await expect(page.locator('#link-error-banner')).toContainText('Invalid link URL format');
+
+    // Cancel modal safely
+    await page.click('#btn-cancel-link');
+    await expect(page.locator('#link-modal')).toBeHidden();
+  });
+
+  test('Negative Case 3: Complex multi-element formatting remains structured and uncorrupted', async ({ page }) => {
+    const readerUser = `complex_fmt_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+    await page.goto('/create-blog');
+
+
+    const complexTitle = `Complex Rich Formatting ${Date.now()}`;
+    await page.fill('#input-blog-title', complexTitle);
+
+    const complexHtml = `<h2>Main Section Heading</h2>
+<p>Introductory paragraph with <strong>bold words</strong>, <em>italic nuances</em>, and <code>inline code tokens</code>.</p>
+<blockquote>A meaningful blockquote with profound design wisdom.</blockquote>
+<ul>
+  <li>Bullet 1 with <a href="https://example.com/one">anchor link</a></li>
+  <li>Bullet 2 with <strong>bold inside list</strong></li>
+</ul>
+<pre><code>function greet() { return "hello world"; }</code></pre>`;
+
+    await page.fill('#input-blog-content', complexHtml);
+
+    // Verify preview mode displays rendered elements
+    await page.click('#btn-tab-preview');
+    await expect(page.locator('#rich-text-preview-pane h2')).toContainText('Main Section Heading');
+    await expect(page.locator('#rich-text-preview-pane blockquote')).toBeVisible();
+
+    // Switch back to source or publish
+    await page.click('#btn-publish-reader-blog');
+    await page.waitForURL(/\/blog\/.+/);
+
+    // Verify fully structured rendering on article detail page
+    const body = page.locator('#article-body-text');
+    await expect(body.locator('h2')).toContainText('Main Section Heading');
+    await expect(body.locator('blockquote')).toContainText('meaningful blockquote');
+    await expect(body.locator('ul li')).toHaveCount(2);
+    await expect(body.locator('pre code')).toContainText('function greet');
+    await expect(body.locator('a[href="https://example.com/one"]')).toBeVisible();
+  });
+});
+
+
 
 
 
