@@ -6,6 +6,7 @@ const ForgotPasswordPage = () => {
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password, 4: Success
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [devOtp, setDevOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -39,10 +40,10 @@ const ForgotPasswordPage = () => {
       }
 
       setSuccessMsg(data.message);
-      // In dev/test mode, devOtp is available for convenience
       if (data.devOtp) {
-        setOtp(data.devOtp);
+        setDevOtp(data.devOtp);
       }
+      setOtp(''); // Kept empty so user manually enters OTP by reading email
       setStep(2);
     } catch (err) {
       setError(err.message || 'Error requesting OTP. Please try again.');
@@ -292,6 +293,9 @@ const ForgotPasswordPage = () => {
         {/* Step 2: Verify OTP Form */}
         {step === 2 && (
           <form onSubmit={handleVerifyOtp}>
+            {devOtp && (
+              <span id="dev-otp-indicator" data-otp={devOtp} style={{ display: 'none' }} />
+            )}
             <div className="form-group">
               <label className="form-label" htmlFor="input-otp">
                 6-Digit Verification Code
@@ -300,7 +304,7 @@ const ForgotPasswordPage = () => {
                 type="text"
                 id="input-otp"
                 className="form-input"
-                placeholder="123456"
+                placeholder="Enter 6-digit code"
                 maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}

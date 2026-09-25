@@ -1245,12 +1245,16 @@ test.describe('GitHub Issue #13: Add Forgot Password with Email OTP', () => {
     await page.fill('#forgot-email', readerEmail);
     await page.click('#btn-request-otp');
 
-    // Step 2: Verify OTP
+    // Step 2: Verify OTP is NOT pre-filled (user enters manually from email)
     await expect(page.locator('#input-otp')).toBeVisible();
-    const otpValue = await page.locator('#input-otp').inputValue();
-    expect(otpValue).toBeTruthy();
-    expect(otpValue.length).toBe(6);
+    const initialOtpValue = await page.locator('#input-otp').inputValue();
+    expect(initialOtpValue).toBe(''); // Must not display directly in the input field!
 
+    const otpCode = await page.locator('#dev-otp-indicator').getAttribute('data-otp');
+    expect(otpCode).toBeTruthy();
+    expect(otpCode.length).toBe(6);
+
+    await page.fill('#input-otp', otpCode);
     await page.click('#btn-verify-otp');
 
     // Step 3: Set New Password
@@ -1331,6 +1335,8 @@ test.describe('GitHub Issue #13: Add Forgot Password with Email OTP', () => {
     await page.fill('#forgot-email', readerEmail);
     await page.click('#btn-request-otp');
     await expect(page.locator('#input-otp')).toBeVisible();
+    const otpCode3 = await page.locator('#dev-otp-indicator').getAttribute('data-otp');
+    await page.fill('#input-otp', otpCode3);
     await page.click('#btn-verify-otp');
 
     // Fill mismatched passwords
@@ -1360,6 +1366,8 @@ test.describe('GitHub Issue #13: Add Forgot Password with Email OTP', () => {
     await page.fill('#forgot-email', readerEmail);
     await page.click('#btn-request-otp');
     await expect(page.locator('#input-otp')).toBeVisible();
+    const otpCode4 = await page.locator('#dev-otp-indicator').getAttribute('data-otp');
+    await page.fill('#input-otp', otpCode4);
     await page.click('#btn-verify-otp');
 
     // Short password (< 6 chars)

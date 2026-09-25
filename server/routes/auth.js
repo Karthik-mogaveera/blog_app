@@ -353,11 +353,13 @@ router.post('/forgot-password', async (req, res) => {
 
     console.log(`[PASSWORD RESET OTP] Generated for ${cleanEmail}: ${otp} (expires ${expiresAt.toISOString()})`);
 
-    // Dispatch email via Nodemailer
-    await sendOtpEmail({
+    // Dispatch email via Nodemailer asynchronously without blocking client response
+    sendOtpEmail({
       to: cleanEmail,
       otp,
       username: user.username
+    }).catch(err => {
+      console.error(`[MAILER] Background email dispatch error for ${cleanEmail}:`, err.message);
     });
 
     return res.status(200).json({
