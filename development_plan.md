@@ -4,9 +4,9 @@
 
 - **Scrum Master & Architect:** Full-Stack Architect (25 Years Experience)
 - **Methodology:** Agile / Issue-Driven Scrum with strict Playwright validation gates
-- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (19 Issues Total)
-- **Total Story Points:** 75 Points
-- **Status:** 100% Completed & Verified (All 19 Issues Closed on GitHub)
+- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (20 Issues Total)
+- **Total Story Points:** 78 Points
+- **Status:** Issues #1 to #19 Closed (100% Verified); Issue #20 Pushed & Open
 
 ```
 +---------------------------------------------------------------------------------------------------------+
@@ -16,8 +16,8 @@
 | SPRINT 2: Blog Management Studio, Public Discovery & Pagination Engine (Issues #4 - #6)                 |
 | SPRINT 3: Engagement Engine (Likes, Multi-Level Comments, Moderation Hub) (Issues #7 - #9)               |
 | SPRINT 4: In-App Notification Center, Edge-Case Hardening & Final Verification (Issues #10 - #11)       |
-| EXTENDED TRACK: Google Auth, Email OTP, Reader Authoring, Bookmarks, Share, Rich Text & Lifecycle       |
-|                 Controls (Issues #12 - #19)                                                             |
+| EXTENDED TRACK: Google Auth, Email OTP, Reader Authoring, Bookmarks, Share, Rich Text, Lifecycle        |
+|                 Controls & Custom Delete Modals (Issues #12 - #20)                                      |
 +---------------------------------------------------------------------------------------------------------+
 ```
 
@@ -259,10 +259,24 @@
   - [x] When unpublished, the article is immediately hidden from the public catalog (`/`) and returns 404 to anonymous visitors.
   - [x] 100% verified via automated Playwright E2E test suite covering publication toggle, public catalog synchronization, and non-owner access protection.
 
+### Issue #20: Replace Browser Default Confirm with Custom Confirmation Modal for Delete Actions
+- **Classification:** `frontend`, `enhancement`, `ui/ux` | **Priority:** P1 | **Complexity:** Medium | **Effort:** 3 SP
+- **Status:** Open (Ready for Development) | **GitHub Issue:** [#20](https://github.com/Karthik-mogaveera/blog_app/issues/20)
+- **Summary:** Replace native browser `window.confirm()` popups with an accessible, high-aesthetic custom confirmation modal whenever a user or admin triggers a delete action for articles or comments.
+- **Acceptance Criteria:**
+  - [ ] Create reusable `ConfirmationModal.jsx` (or `DeleteModal.jsx`) styled with glassmorphism tokens, backdrop blur, warning icon, and danger actions.
+  - [ ] Replace `window.confirm()` in `AdminDashboardPage.jsx` (`/admin/blogs`).
+  - [ ] Replace `window.confirm()` in `MyStoriesPage.jsx` (`/my-stories`).
+  - [ ] Replace `window.confirm()` in `CommentTree.jsx` (discussions on `/blog/:id`).
+  - [ ] Replace `window.confirm()` in `AdminModerationPage.jsx` (`/admin/comments`).
+  - [ ] Implement accessible keyboard controls (`Escape` to close) and backdrop click dismiss.
+  - [ ] Write and verify automated Playwright E2E tests validating the custom confirmation modal and zero usage of native dialogs.
+
 ---
 
 ## Final Project Status Summary
-- **Total Issues:** 19
-- **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #19)
-- **Story Points:** 75 / 75 Points Completed (100%)
-- **All 19 GitHub Issues:** **CLOSED (`completed`)**
+- **Total Issues:** 20
+- **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #20)
+- **Story Points:** 78 Points Total (75 Completed, 3 Open)
+- **Issues #1 to #19:** **CLOSED (`completed`)**
+- **Issue #20:** **OPEN (Active on GitHub)**
