@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ConfirmationModal from '../components/ConfirmationModal';
 import {
   PenSquare,
   BookOpen,
@@ -19,6 +20,7 @@ const MyStoriesPage = () => {
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
+  const [storyToDelete, setStoryToDelete] = useState(null);
 
   const fetchMyStories = useCallback(async () => {
     setLoading(true);
@@ -70,10 +72,9 @@ const MyStoriesPage = () => {
     }
   };
 
-  const handleDelete = async (blogId) => {
-    if (!window.confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
-      return;
-    }
+  const handleConfirmDelete = async () => {
+    if (!storyToDelete) return;
+    const blogId = storyToDelete._id || storyToDelete.id;
 
     setDeletingId(blogId);
     try {
@@ -84,6 +85,7 @@ const MyStoriesPage = () => {
       const data = await res.json();
       if (data.success) {
         setBlogs((prev) => prev.filter((b) => b._id !== blogId && b.id !== blogId));
+        setStoryToDelete(null);
       } else {
         alert(data.message || 'Failed to delete story.');
       }
@@ -257,7 +259,7 @@ const MyStoriesPage = () => {
                     type="button"
                     id={`btn-delete-story-${blog._id || blog.id}`}
                     className="btn btn-ghost btn-sm text-accent-rose"
-                    onClick={() => handleDelete(blog._id || blog.id)}
+                    onClick={() => setStoryToDelete(blog)}
                     disabled={deletingId === (blog._id || blog.id) || togglingId === (blog._id || blog.id)}
                     title="Delete story"
                   >
@@ -269,6 +271,22 @@ const MyStoriesPage = () => {
           ))}
         </div>
       )}
+
+      {/* Custom Confirmation Modal for Story Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(storyToDelete)}
+        title="Delete Story"
+        message={
+          storyToDelete
+            ? `Are you sure you want to delete "${storyToDelete.title}"? This action cannot be undone.`
+            : ''
+        }
+        confirmText="Delete Story"
+        confirmVariant="danger"
+        loading={deletingId === (storyToDelete?._id || storyToDelete?.id)}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setStoryToDelete(null)}
+      />
     </div>
   );
 };

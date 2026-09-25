@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ConfirmationModal from '../components/ConfirmationModal';
 import {
   PlusCircle,
   Edit,
@@ -22,6 +23,7 @@ const AdminDashboardPage = () => {
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
   const [searchFilter, setSearchFilter] = useState('');
+  const [blogToDelete, setBlogToDelete] = useState(null);
 
   // Fetch all blogs (drafts + published) for Admin
   const fetchAdminBlogs = useCallback(async () => {
@@ -80,19 +82,20 @@ const AdminDashboardPage = () => {
   };
 
   // Permanent Cascade Delete
-  const handleDeleteBlog = async (blog) => {
-    const confirmMsg = `Are you sure you want to permanently delete "${blog.title}"?\n\nWARNING: This will permanently purge this article and all of its ${blog.commentCount || 0} comments and ${blog.likeCount || 0} likes with zero residue!`;
-    if (!window.confirm(confirmMsg)) return;
+  const handleConfirmDeleteBlog = async () => {
+    if (!blogToDelete) return;
+    const blogId = blogToDelete._id || blogToDelete.id;
 
-    setActionLoading(blog._id || blog.id);
+    setActionLoading(blogId);
     try {
-      const res = await fetch(`/api/blogs/${blog._id || blog.id}`, {
+      const res = await fetch(`/api/blogs/${blogId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
-        setBlogs((prev) => prev.filter((b) => (b._id || b.id) !== (blog._id || blog.id)));
+        setBlogs((prev) => prev.filter((b) => (b._id || b.id) !== blogId));
+        setBlogToDelete(null);
       } else {
         alert(data.message || 'Failed to delete blog');
       }
@@ -277,7 +280,7 @@ const AdminDashboardPage = () => {
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm text-danger"
-                            onClick={() => handleDeleteBlog(b)}
+                            onClick={() => setBlogToDelete(b)}
                             disabled={isActionBusy}
                             title="Permanently delete article and all comments"
                             id={`admin-delete-btn-${id}`}
@@ -294,6 +297,22 @@ const AdminDashboardPage = () => {
           </div>
         )}
       </div>
+
+      {/* Custom Confirmation Modal for Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(blogToDelete)}
+        title="Delete Article Permanently"
+        message={
+          blogToDelete
+            ? `Are you sure you want to permanently delete "${blogToDelete.title}"? This will permanently purge this article and all of its ${blogToDelete.commentCount || 0} comments and ${blogToDelete.likeCount || 0} likes with zero residue!`
+            : ''
+        }
+        confirmText="Delete Article"
+        confirmVariant="danger"
+        loading={actionLoading === (blogToDelete?._id || blogToDelete?.id)}
+        onConfirm={handleConfirmDeleteBlog}
+        onClose={() => setBlogToDelete(null)}
+      />
     </div>
   );
 };

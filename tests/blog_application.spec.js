@@ -293,6 +293,10 @@ test.describe('Sprint 2: Blog Management Studio & Public Discovery Engine', () =
     });
     const deleteBtn = row.locator('button[title*="Permanently delete"]');
     await deleteBtn.click();
+    const modalConfirm = page.locator('#btn-modal-confirm');
+    if (await modalConfirm.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await modalConfirm.click();
+    }
 
     // Verify row is removed from table
     await expect(page.locator(`tr:has-text("${tempTitle}")`)).toHaveCount(0);
@@ -558,6 +562,10 @@ test.describe('Sprint 3: Engagement Engine — Likes, Multi-Level Comments & Mod
     // Test Cascade Deletion: Deleting the top comment removes it AND the nested reply!
     page.on('dialog', (dialog) => dialog.accept());
     await topCommentCard.locator('button:has-text("Delete")').first().click();
+    const modalConfirmTop = page.locator('#btn-modal-confirm');
+    if (await modalConfirmTop.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await modalConfirmTop.click();
+    }
     await page.waitForTimeout(600);
 
     // Both parent and child should be gone
@@ -2223,6 +2231,240 @@ test.describe('Sprint 7: Issue #19 - Allow Readers to Change Blog Status (Publis
     expect(unauthorizedToggleRes.status()).toBe(403);
   });
 });
+
+test.describe('GitHub Issue #20: Replace Browser Default Confirm with Custom Confirmation Modal for Delete Actions', () => {
+  test('Positive Test 1: Reader My Stories deletion uses custom modal, supports Cancel and Escape, and deletes on Confirm with ZERO browser alerts', async ({ page }) => {
+    // 1. Register reader and create story
+    const readerUser = `modal_reader_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    const storyTitle = `Delete Modal Story ${Date.now()}`;
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', storyTitle);
+    await page.fill('#input-blog-content', '<p>Testing custom confirmation modal on deletion.</p>');
+    await page.click('#btn-save-draft');
+    await page.waitForURL('/my-stories');
+
+    // Setup listener to assert native window.confirm is NEVER called
+    let browserDialogTriggered = false;
+    page.on('dialog', () => {
+      browserDialogTriggered = true;
+    });
+
+    const storyCard = page.locator('.card', { hasText: storyTitle });
+    await expect(storyCard).toBeVisible();
+
+    const deleteBtn = storyCard.locator('button[title="Delete story"]');
+
+    // 2. Click Delete button -> Custom modal must appear
+    await deleteBtn.click();
+    expect(browserDialogTriggered).toBe(false);
+
+    const modal = page.locator('#confirmation-modal');
+    await expect(modal).toBeVisible();
+    await expect(page.locator('#confirmation-modal-title')).toHaveText('Delete Story');
+    await expect(page.locator('#confirmation-modal-message')).toContainText(storyTitle);
+
+    // 3. Test Cancel button dismisses modal without deleting
+    await page.click('#btn-modal-cancel');
+    await expect(modal).not.toBeVisible();
+    await expect(storyCard).toBeVisible();
+
+    // 4. Test Escape key dismisses modal
+    await deleteBtn.click();
+    await expect(modal).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(modal).not.toBeVisible();
+    await expect(storyCard).toBeVisible();
+
+    // 5. Test Confirm button completes deletion
+    await deleteBtn.click();
+    await expect(modal).toBeVisible();
+    await page.click('#btn-modal-confirm');
+
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator('.card', { hasText: storyTitle })).not.toBeVisible();
+    expect(browserDialogTriggered).toBe(false);
+  });
+
+  test('Positive Test 2: Admin Dashboard article deletion uses custom modal and suppresses window.confirm', async ({ page }) => {
+    // 1. Admin login
+    await page.goto('/');
+    if (await page.locator('#nav-btn-logout').isVisible()) {
+      await page.click('#nav-btn-logout');
+    }
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', 'Admin@123456');
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/admin/blogs');
+
+    // 2. Create an admin blog to delete
+    const adminStoryTitle = `Admin Modal Delete Test ${Date.now()}`;
+    await page.click('#admin-create-blog-btn');
+    await page.waitForURL('/admin/blogs/new');
+    await page.fill('#blog-title-input', adminStoryTitle);
+    await page.fill('#blog-content-textarea', 'Admin article to test custom delete modal.');
+    await page.click('#editor-save-draft-btn');
+    await page.waitForURL('/admin/blogs');
+
+    let browserDialogTriggered = false;
+    page.on('dialog', () => {
+      browserDialogTriggered = true;
+    });
+
+    const blogRow = page.locator(`tr:has-text("${adminStoryTitle}")`);
+    await expect(blogRow).toBeVisible();
+
+    const adminDeleteBtn = blogRow.locator('button[title*="Permanently delete"]');
+
+    // Click delete -> Assert custom modal
+    await adminDeleteBtn.click();
+    expect(browserDialogTriggered).toBe(false);
+
+    const modal = page.locator('#confirmation-modal');
+    await expect(modal).toBeVisible();
+    await expect(page.locator('#confirmation-modal-title')).toHaveText('Delete Article Permanently');
+    await expect(page.locator('#confirmation-modal-message')).toContainText(adminStoryTitle);
+
+    // Cancel first
+    await page.click('#btn-modal-cancel');
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator(`tr:has-text("${adminStoryTitle}")`)).toBeVisible();
+
+    // Now Confirm delete
+    await adminDeleteBtn.click();
+    await expect(modal).toBeVisible();
+    await page.click('#btn-modal-confirm');
+
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator(`tr:has-text("${adminStoryTitle}")`)).not.toBeVisible();
+    expect(browserDialogTriggered).toBe(false);
+  });
+
+  test('Positive Test 3: Article Comment deletion uses custom modal and modal X close button', async ({ page }) => {
+    // 1. Register reader
+    const readerUser = `commenter_${Date.now()}`;
+    await page.goto('/');
+    if (await page.locator('#nav-btn-logout').isVisible()) {
+      await page.click('#nav-btn-logout');
+    }
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', `${readerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Reader creates a blog so we have an article guaranteed with comments
+    const articleTitle = `Comment Modal Article ${Date.now()}`;
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', articleTitle);
+    await page.fill('#input-blog-content', '<p>Testing comment modal deletion</p>');
+    await page.click('#btn-submit-blog');
+    await page.waitForSelector('#comment-input-textarea');
+
+    // Post comment
+    const commentMsg = `Custom modal test comment ${Date.now()}`;
+    await page.fill('#comment-input-textarea', commentMsg);
+    await page.click('#comment-submit-btn');
+
+    const commentNode = page.locator('.comment-node', { hasText: commentMsg });
+    await expect(commentNode).toBeVisible();
+
+    let browserDialogTriggered = false;
+    page.on('dialog', () => {
+      browserDialogTriggered = true;
+    });
+
+    const commentDeleteBtn = commentNode.locator('button[title*="Delete comment"]');
+    await commentDeleteBtn.click();
+    expect(browserDialogTriggered).toBe(false);
+
+    const modal = page.locator('#confirmation-modal');
+    await expect(modal).toBeVisible();
+    await expect(page.locator('#confirmation-modal-title')).toHaveText('Delete Comment');
+
+    // Test X close button
+    await page.click('#btn-modal-close-x');
+    await expect(modal).not.toBeVisible();
+    await expect(commentNode).toBeVisible();
+
+    // Confirm deletion
+    await commentDeleteBtn.click();
+    await expect(modal).toBeVisible();
+    await page.click('#btn-modal-confirm');
+
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator('.comment-node', { hasText: commentMsg })).not.toBeVisible();
+    expect(browserDialogTriggered).toBe(false);
+  });
+
+  test('Positive Test 4: Admin Moderation cascade comment deletion uses custom modal', async ({ page }) => {
+    // Admin login
+    await page.goto('/');
+    if (await page.locator('#nav-btn-logout').isVisible()) {
+      await page.click('#nav-btn-logout');
+    }
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', 'Admin@123456');
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/admin/blogs');
+
+    // Post a comment first on an article
+    await page.goto('/');
+    const firstArticle = page.locator('.blog-card a, .blog-card-typography a').first();
+    await firstArticle.click();
+    await page.waitForSelector('#comment-input-textarea');
+    const modComment = `Mod Test Comment ${Date.now()}`;
+    await page.fill('#comment-input-textarea', modComment);
+    await page.click('#comment-submit-btn');
+    await expect(page.locator('.comment-node', { hasText: modComment })).toBeVisible();
+
+    // Go to Admin Moderation
+    await page.goto('/admin/comments');
+    await expect(page.locator('.admin-table-card')).toBeVisible();
+
+    let browserDialogTriggered = false;
+    page.on('dialog', () => {
+      browserDialogTriggered = true;
+    });
+
+    const modRow = page.locator('tr', { hasText: modComment });
+    await expect(modRow).toBeVisible();
+
+    const modDeleteBtn = modRow.locator('button[title*="Cascade delete"]');
+    await modDeleteBtn.click();
+    expect(browserDialogTriggered).toBe(false);
+
+    const modal = page.locator('#confirmation-modal');
+    await expect(modal).toBeVisible();
+    await expect(page.locator('#confirmation-modal-title')).toHaveText('Cascade Delete Comment');
+
+    // Cancel
+    await page.click('#btn-modal-cancel');
+    await expect(modal).not.toBeVisible();
+    await expect(modRow).toBeVisible();
+
+    // Confirm delete
+    await modDeleteBtn.click();
+    await expect(modal).toBeVisible();
+    await page.click('#btn-modal-confirm');
+
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator('tr', { hasText: modComment })).not.toBeVisible();
+    expect(browserDialogTriggered).toBe(false);
+  });
+});
+
 
 
 

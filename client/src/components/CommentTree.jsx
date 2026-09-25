@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import ConfirmationModal from './ConfirmationModal';
 import { MessageSquare, Edit3, Trash2, CornerDownRight, Check, X } from 'lucide-react';
 
 const CommentItem = ({
@@ -16,6 +17,7 @@ const CommentItem = ({
   const [editText, setEditText] = useState(comment.content);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const authorId = comment.author?.id || (comment.userId?._id || comment.userId);
   const currentUserId = user?._id || user?.id;
@@ -56,21 +58,19 @@ const CommentItem = ({
     }
   };
 
-  const handleDelete = async () => {
-    const hasReplies = childReplies.length > 0;
-    const confirmMsg = hasReplies
-      ? 'Deleting this comment will permanently remove it AND all of its replies. Proceed?'
-      : 'Are you sure you want to delete this comment?';
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
 
-    if (window.confirm(confirmMsg)) {
-      setLoading(true);
-      try {
-        await onDelete(comment._id || comment.id);
-      } catch (err) {
-        alert(err.message || 'Failed to delete comment');
-      } finally {
-        setLoading(false);
-      }
+  const handleConfirmDelete = async () => {
+    setLoading(true);
+    try {
+      await onDelete(comment._id || comment.id);
+      setShowDeleteModal(false);
+    } catch (err) {
+      alert(err.message || 'Failed to delete comment');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -242,6 +242,22 @@ const CommentItem = ({
           ))}
         </div>
       )}
+
+      {/* Custom Confirmation Modal for Comment Deletion */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        title={childReplies.length > 0 ? 'Delete Comment & Cascade Replies' : 'Delete Comment'}
+        message={
+          childReplies.length > 0
+            ? 'Deleting this comment will permanently remove it AND all of its replies. Proceed with cascade deletion?'
+            : 'Are you sure you want to delete this comment? This action cannot be undone.'
+        }
+        confirmText="Delete Comment"
+        confirmVariant="danger"
+        loading={loading}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setShowDeleteModal(false)}
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ConfirmationModal from '../components/ConfirmationModal';
 import { ShieldCheck, Trash2, Edit3, MessageSquare, ExternalLink, Check, X } from 'lucide-react';
 
 const AdminModerationPage = () => {
@@ -12,6 +13,7 @@ const AdminModerationPage = () => {
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const [commentToDelete, setCommentToDelete] = useState(null);
 
   const fetchModerationComments = useCallback(async () => {
     try {
@@ -71,10 +73,9 @@ const AdminModerationPage = () => {
   };
 
   // Admin Cascade Delete
-  const handleDeleteComment = async (commentId) => {
-    const confirmMsg =
-      'WARNING: Deleting this comment will permanently remove this comment and ALL of its subordinate nested replies.\n\nProceed with cascade deletion?';
-    if (!window.confirm(confirmMsg)) return;
+  const handleConfirmDeleteComment = async () => {
+    if (!commentToDelete) return;
+    const commentId = commentToDelete._id || commentToDelete.id;
 
     setActionLoading(commentId);
     try {
@@ -84,6 +85,7 @@ const AdminModerationPage = () => {
       });
       const data = await res.json();
       if (data.success) {
+        setCommentToDelete(null);
         fetchModerationComments();
       } else {
         alert(data.message || 'Failed to delete comment');
@@ -252,7 +254,7 @@ const AdminModerationPage = () => {
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm text-danger"
-                            onClick={() => handleDeleteComment(id)}
+                            onClick={() => setCommentToDelete(c)}
                             disabled={isBusy}
                             title="Cascade delete comment and all replies"
                             id={`mod-delete-btn-${id}`}
@@ -269,6 +271,22 @@ const AdminModerationPage = () => {
           </div>
         )}
       </div>
+
+      {/* Custom Confirmation Modal for Comment Cascade Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(commentToDelete)}
+        title="Cascade Delete Comment"
+        message={
+          commentToDelete
+            ? `WARNING: Deleting this comment by @${commentToDelete.author?.username || 'user'} will permanently remove this comment and ALL subordinate replies across discussions. Proceed with cascade deletion?`
+            : ''
+        }
+        confirmText="Cascade Delete"
+        confirmVariant="danger"
+        loading={actionLoading === (commentToDelete?._id || commentToDelete?.id)}
+        onConfirm={handleConfirmDeleteComment}
+        onClose={() => setCommentToDelete(null)}
+      />
     </div>
   );
 };
