@@ -27,6 +27,16 @@ const blogSchema = new mongoose.Schema(
       trim: true,
       default: 'Admin'
     },
+    authorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    authorRole: {
+      type: String,
+      enum: ['admin', 'reader'],
+      default: 'admin'
+    },
     category: {
       type: String,
       required: [true, 'Category is required'],

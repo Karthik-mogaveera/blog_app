@@ -1382,5 +1382,161 @@ test.describe('GitHub Issue #13: Add Forgot Password with Email OTP', () => {
   });
 });
 
+test.describe('GitHub Issue #14: Allow Readers to Post Blogs', () => {
+  test('Positive Case 1 & 2: Reader creates and submits valid blog, appearing in catalog with reader attribution', async ({ page }) => {
+    // 1. Register reader
+    const readerUser = `writer_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'SecretPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Click Write link in navbar
+    const navWriteLink = page.locator('#nav-link-write');
+    await expect(navWriteLink).toBeVisible();
+    await navWriteLink.click();
+    await page.waitForURL('/create-blog');
+
+    // 3. Fill in story details
+    const storyTitle = `Reader Story by ${readerUser}`;
+    const storyContent = `This is a full-length insightful article published directly by registered reader ${readerUser}. It details architectural design and frontend ergonomics.`;
+
+    await page.fill('#input-blog-title', storyTitle);
+    await page.selectOption('#select-blog-category', 'Technology');
+    await page.fill('#input-blog-tags', 'reader, community, tech');
+    await page.fill('#input-blog-content', storyContent);
+
+    // 4. Submit and publish
+    await page.click('#btn-publish-reader-blog');
+
+    // 5. Verify redirection to published article detail view
+    await page.waitForURL(/\/blog\/.+/);
+    await expect(page.locator('.article-title')).toHaveText(storyTitle);
+    await expect(page.locator('.article-author-meta')).toContainText(readerUser);
+    await expect(page.locator('#article-body-text')).toContainText(storyContent);
+
+    // 6. Verify appearance in public catalog on homepage
+    await page.goto('/');
+    const blogTitleLink = page.getByRole('link', { name: storyTitle }).first();
+    await expect(blogTitleLink).toBeVisible();
+  });
+
+  test('Positive Case 3: Reader creates multiple blog posts independently without overwriting', async ({ page }) => {
+    const readerUser = `multi_writer_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'SecretPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // Post 1
+    await page.goto('/create-blog');
+    const title1 = `First Article by ${readerUser}`;
+    await page.fill('#input-blog-title', title1);
+    await page.fill('#input-blog-content', 'First article content written by reader.');
+    await page.click('#btn-publish-reader-blog');
+    await page.waitForURL(/\/blog\/.+/);
+
+    // Post 2
+    await page.goto('/create-blog');
+    const title2 = `Second Article by ${readerUser}`;
+    await page.fill('#input-blog-title', title2);
+    await page.fill('#input-blog-content', 'Second article content written by reader.');
+    await page.click('#btn-publish-reader-blog');
+    await page.waitForURL(/\/blog\/.+/);
+
+    // Check My Stories dashboard
+    await page.goto('/my-stories');
+    await expect(page.locator('#my-stories-list')).toContainText(title1);
+    await expect(page.locator('#my-stories-list')).toContainText(title2);
+  });
+
+  test('Negative Case 1 & 4: Unauthenticated user is prevented from accessing /create-blog and redirected to /login', async ({ page }) => {
+    // Navigate to create-blog as unauthenticated guest
+    await page.goto('/create-blog');
+    await page.waitForURL('/login');
+    await expect(page.locator('#login-submit-btn')).toBeVisible();
+  });
+
+  test('Negative Case 2 & 3: Empty or incomplete content prevents submission with validation message', async ({ page }) => {
+    const readerUser = `empty_writer_${Date.now()}`;
+    const readerEmail = `${readerUser}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', 'SecretPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    await page.goto('/create-blog');
+
+    // Attempt submission with empty fields
+    await page.click('#btn-publish-reader-blog');
+    const errorBanner = page.locator('#create-blog-error-banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText('Please provide both a title and content');
+
+    // Incomplete: title only
+    await page.fill('#input-blog-title', 'Only a title without content');
+    await page.click('#btn-publish-reader-blog');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText('Please provide both a title and content');
+  });
+
+  test('Negative Case 5: Non-owner reader cannot delete or modify another reader blog', async ({ page, request }) => {
+    // 1. Author registers and creates blog
+    const authorUser = `author_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', authorUser);
+    await page.fill('#register-email', `${authorUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', `Target Article by ${authorUser}`);
+    await page.fill('#input-blog-content', 'Original content.');
+    await page.click('#btn-publish-reader-blog');
+    await page.waitForURL(/\/blog\/(.+)/);
+    const blogId = page.url().split('/blog/')[1];
+
+    await page.click('#nav-btn-logout');
+
+    // 2. Attacker reader registers
+    const attackerUser = `attacker_${Date.now()}`;
+    await page.goto('/register');
+    await page.fill('#register-username', attackerUser);
+    await page.fill('#register-email', `${attackerUser}@example.com`);
+    await page.fill('#register-password', 'ValidPass@123');
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // Get token of attacker
+    const attackerToken = await page.evaluate(() => localStorage.getItem('token'));
+
+    // Attempt DELETE on author's blog
+    const deleteRes = await request.delete(`/api/blogs/${blogId}`, {
+      headers: { Authorization: `Bearer ${attackerToken}` }
+    });
+    expect(deleteRes.status()).toBe(403);
+
+    // Attempt PUT on author's blog
+    const putRes = await request.put(`/api/blogs/${blogId}`, {
+      headers: { Authorization: `Bearer ${attackerToken}` },
+      data: { title: 'Hacked Title', content: 'Hacked Content' }
+    });
+    expect(putRes.status()).toBe(403);
+  });
+});
+
+
 
 
