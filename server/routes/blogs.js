@@ -3,6 +3,7 @@ const Blog = require('../models/Blog');
 const Comment = require('../models/Comment');
 const Like = require('../models/Like');
 const Notification = require('../models/Notification');
+const SavedBlog = require('../models/SavedBlog');
 const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth');
 const { PREDEFINED_CATEGORIES } = require('../models/Blog');
 
@@ -168,10 +169,11 @@ router.get('/:id', optionalAuth, async (req, res) => {
       }
     }
 
-    const [likeCount, commentCount, userLike] = await Promise.all([
+    const [likeCount, commentCount, userLike, userSave] = await Promise.all([
       Like.countDocuments({ blogId: blog._id }),
       Comment.countDocuments({ blogId: blog._id }),
-      req.user ? Like.findOne({ blogId: blog._id, userId: req.user._id }) : null
+      req.user ? Like.findOne({ blogId: blog._id, userId: req.user._id }) : null,
+      req.user ? SavedBlog.findOne({ blogId: blog._id, userId: req.user._id }) : null
     ]);
 
     return res.status(200).json({
@@ -180,7 +182,8 @@ router.get('/:id', optionalAuth, async (req, res) => {
         ...blog.toJSON(),
         likeCount,
         commentCount,
-        userHasLiked: !!userLike
+        userHasLiked: !!userLike,
+        userHasSaved: !!userSave
       }
     });
   } catch (error) {

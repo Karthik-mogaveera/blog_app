@@ -16,7 +16,8 @@ import {
   Moon,
   Menu,
   X,
-  PenSquare
+  PenSquare,
+  Bookmark
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -92,6 +93,14 @@ const Navbar = () => {
               >
                 <PenSquare size={16} />
                 Write
+              </NavLink>
+              <NavLink
+                to="/saved"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                id="nav-link-saved"
+              >
+                <Bookmark size={16} />
+                Saved
               </NavLink>
               <NavLink
                 to="/my-stories"
@@ -244,6 +253,15 @@ const Navbar = () => {
               >
                 <PenSquare size={18} />
                 <span>Write Story</span>
+              </NavLink>
+              <NavLink
+                to="/saved"
+                className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
+                id="nav-mobile-link-saved"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Bookmark size={18} />
+                <span>Saved Articles</span>
               </NavLink>
               <NavLink
                 to="/my-stories"

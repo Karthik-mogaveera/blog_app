@@ -10,6 +10,7 @@ const blogRoutes = require('./routes/blogs');
 const commentRoutes = require('./routes/comments');
 const likeRoutes = require('./routes/likes');
 const notificationRoutes = require('./routes/notifications');
+const savedRoutes = require('./routes/saved');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -58,6 +59,7 @@ app.use('/api/blogs', blogRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/likes', likeRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/saved', savedRoutes);
 
 // Serve static client assets if built
 const clientDistPath = path.join(__dirname, '../client/dist');
