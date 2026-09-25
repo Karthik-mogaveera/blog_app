@@ -1,21 +1,23 @@
-# Development Plan: Full-Stack Blog Application
+# Development Plan: Full-Stack Chronicle Blog Application
 
 ## Scrum Overview & Milestone Roadmap
 
 - **Scrum Master & Architect:** Full-Stack Architect (25 Years Experience)
 - **Methodology:** Agile / Issue-Driven Scrum with strict Playwright validation gates
-- **Total Story Points:** 42 Points across 4 Sprints
-- **Sprint Duration:** 1 Milestone per Sprint
+- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (17 Issues Total)
+- **Total Story Points:** 68 Points
+- **Status:** 100% Completed & Verified (All 17 Issues Closed)
 
 ```
-+-----------------------------------------------------------------------------------------+
-|                                    PROJECT ROADMAP                                      |
-+-----------------------------------------------------------------------------------------+
-| SPRINT 1: Scaffolding, Design Tokens, Database Engine & Authentication                  |
-| SPRINT 2: Blog Management Studio, Public Discovery & Pagination Engine                  |
-| SPRINT 3: Engagement Engine (Likes, Multi-Level Comments, Moderation Hub)               |
-| SPRINT 4: In-App Notification Center, Edge-Case Hardening & Final System Acceptance    |
-+-----------------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------------------------------+
+|                                           PROJECT ROADMAP                                               |
++---------------------------------------------------------------------------------------------------------+
+| SPRINT 1: Scaffolding, Design Tokens, Database Engine & Authentication (Issues #1 - #3)                 |
+| SPRINT 2: Blog Management Studio, Public Discovery & Pagination Engine (Issues #4 - #6)                 |
+| SPRINT 3: Engagement Engine (Likes, Multi-Level Comments, Moderation Hub) (Issues #7 - #9)               |
+| SPRINT 4: In-App Notification Center, Edge-Case Hardening & Final Verification (Issues #10 - #11)       |
+| EXTENDED TRACK: Google Auth, Email OTP, Reader Authoring, Bookmarks, Share & Rich Text (Issues #12 - #17)|
++---------------------------------------------------------------------------------------------------------+
 ```
 
 ---
@@ -39,7 +41,7 @@
 - **Acceptance Criteria:**
   - [x] Express server starts with clean logging.
   - [x] MongoDB connection succeeds with Mongoose.
-  - [x] All 5 Mongoose models initialized with validation.
+  - [x] All Mongoose models initialized with validation.
 
 ### Issue #2: Vanilla CSS Modern Design System & Responsive Shell
 - **Summary:** Implement cohesive Vanilla CSS design system with CSS tokens, glassmorphism, responsive navigation shell, and theme variables.
@@ -49,7 +51,7 @@
 - **Effort:** 3 Story Points
 - **Status:** Completed (100% Verified via Playwright Test #2)
 - **Background Context:** Design aesthetics must wow at first glance, featuring modern typography (*Plus Jakarta Sans* / *Inter*), glowing accents, card elevations, and responsive breakpoints.
-- **Expected Result:** A reusable global design system (`index.css`) with tokens for colors, shadows, borders, transitions, container grids, responsive navigation header, notification bell anchor, and footer.
+- **Expected Result:** A reusable global design system (`index.css`, `components.css`) with tokens for colors, shadows, borders, transitions, container grids, responsive navigation header, notification bell anchor, and footer.
 - **Positive Test Cases:**
   - Layout adapts smoothly across Desktop (1200px+), Tablet (768px-1199px), and Mobile (<768px).
   - Navigation bar displays branding, navigation links, and dynamic auth state.
@@ -95,12 +97,12 @@
   - [x] Predefined categories dropdown populated.
   - [x] Custom author field defaults to Admin but is editable.
   - [x] Draft blogs saved with `status = 'draft'` and hidden from public.
-  - [x] Published blogs saved with `status = 'published'` and `published_at` timestamp.
+  - [x] Published blogs saved with `status = 'published'` and `publishedAt` timestamp.
 
 ### Issue #5: Blog Lifecycle Controls (Unpublish vs. Permanent Delete)
 - **Classification:** `backend`, `frontend` | **Priority:** P0 | **Complexity:** Medium | **Effort:** 3 SP
 - **Status:** Completed (100% Verified via Playwright Test #8)
-- **Summary:** Implement the exact lifecycle rules: Unpublish hides content and retains all comments/likes, while Delete permanently purges the blog and cascade-deletes all comments, replies, and likes.
+- **Summary:** Implement exact lifecycle rules: Unpublish hides content and retains all comments/likes, while Delete permanently purges the blog and cascade-deletes all comments, replies, and likes.
 - **Acceptance Criteria:**
   - [x] `PATCH /api/blogs/:id/publish` toggles status between published and draft.
   - [x] `DELETE /api/blogs/:id` permanently removes blog and cascades to delete all comments, replies, and likes.
@@ -114,7 +116,7 @@
   - [x] Posts without cover image render elegant typography-first layout.
   - [x] Keyword search filters published posts.
   - [x] Category chips filter posts by category.
-  - [x] Pagination displays 6/9 posts per page with Prev/Next and page numbers.
+  - [x] Pagination displays posts with Prev/Next and page numbers.
   - [x] Changing search/filter resets view to Page 1.
 
 ---
@@ -171,3 +173,72 @@
   - [x] Playwright tests pass 100% across positive and negative paths.
   - [x] Zero unhandled errors or console warnings.
 
+---
+
+## Extended Track: Advanced Reader & Authoring Capabilities (Story Points: 26)
+
+### Issue #12: Add Continue with Google for Reader Authentication
+- **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P1 | **Complexity:** Medium | **Effort:** 4 SP
+- **Status:** Completed (Branch `feature/issue-12-google-auth`, Commit `eb3570e`)
+- **Summary:** Reader sign-in via Google OAuth with account linking, auto-registration for new Google accounts, and multi-colored Google SVG branding.
+- **Acceptance Criteria:**
+  - [x] Google sign-in buttons on Login and Register pages.
+  - [x] Automatic user profile creation and JWT issuance on `POST /api/auth/google`.
+  - [x] Cancellation safely closes modal without session disruption.
+
+### Issue #13: Add Forgot Password with Email OTP
+- **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P1 | **Complexity:** High | **Effort:** 5 SP
+- **Status:** Completed (Branch `feature/issue-13-forgot-password-otp`, Commit `6e162f8`)
+- **Summary:** Four-step forgot password workflow utilizing Nodemailer SMTP for secure 6-digit OTP delivery, manual OTP input, password reset, and login validation.
+- **Acceptance Criteria:**
+  - [x] `#link-forgot-password` on login routes to `/forgot-password`.
+  - [x] 6-digit OTP generated with 10-minute expiry window and delivered via SMTP.
+  - [x] Individual digit inputs with auto-advancing focus.
+  - [x] New password hashed and stored with instant login capability.
+
+### Issue #14: Allow Readers to Post Blogs & Device Cover Photo Upload
+- **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P0 | **Complexity:** High | **Effort:** 5 SP
+- **Status:** Completed (Branch `feature/issue-14-reader-blog-posting`, Commit `0c2221f` & `561c62a`)
+- **Summary:** Empower authenticated readers to author, publish, save drafts, and upload cover photos directly from device storage using client-side canvas compression.
+- **Acceptance Criteria:**
+  - [x] Desktop "Write" nav link and mobile drawer link for authenticated readers.
+  - [x] `CreateBlogPage.jsx` with device drag-and-drop dropzone and canvas optimization.
+  - [x] `MyStoriesPage.jsx` managing author's stories and drafts.
+  - [x] Authorization guards restricting editing/deletion strictly to authors and admins.
+
+### Issue #15: Add Save and Share Actions to Blogs
+- **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P1 | **Complexity:** Medium | **Effort:** 4 SP
+- **Status:** Completed (Branch `feature/issue-15-save-and-share-actions`, Commit `36fed3a`)
+- **Summary:** Bookmark articles to private Reading List (`/saved`) and share articles via social dialog (Twitter/X, LinkedIn, Facebook, Email, and clipboard copy).
+- **Acceptance Criteria:**
+  - [x] `#btn-save-blog` toggles save state with active styling (`.save-btn.saved`).
+  - [x] `/saved` reading list with quick unsave actions.
+  - [x] `ShareModal.jsx` with one-click direct URL copy and social sharing channels.
+  - [x] Unique compound index `{ blogId: 1, userId: 1 }` preventing duplicate saves.
+
+### Issue #16: Add Save and Share Actions to Blogs (Companion / Duplicate)
+- **Classification:** `task`, `enhancement` | **Priority:** P1 | **Complexity:** Low | **Effort:** 3 SP
+- **Status:** Completed (Verified & Closed under Commit `36fed3a`)
+- **Summary:** Companion ticket for Save & Share capabilities, verified and closed with full test reporting.
+- **Acceptance Criteria:**
+  - [x] Verified full compliance with Issue #15 deliverables.
+  - [x] Closed with resolution audit report on GitHub.
+
+### Issue #17: Add Rich Text Editor for Blog Content
+- **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P0 | **Complexity:** High | **Effort:** 5 SP
+- **Status:** Completed (Branch `feature/issue-17-rich-text-editor`, Commit `ae5dfaa`)
+- **Summary:** WYSIWYG & HTML authoring toolbar supporting Bold, Italic, Headings, Ordered/Unordered Lists, Blockquotes, Code, and Hyperlinks with XSS sanitization and live preview.
+- **Acceptance Criteria:**
+  - [x] `RichTextEditor.jsx` with formatting toolbar buttons (`#btn-format-bold`, `#btn-format-italic`, etc.).
+  - [x] Safe HTML sanitization engine (`richText.js`) preventing XSS attacks.
+  - [x] Backward compatibility for legacy plaintext articles.
+  - [x] Integrated across reader authoring, admin studio, and article reading view.
+  - [x] 100% passing Playwright E2E tests covering positive and negative edge cases.
+
+---
+
+## Final Project Status Summary
+- **Total Issues:** 17
+- **Total Sprints:** 4 Core Sprints + Extended Track
+- **Story Points Completed:** 68 / 68 (100%)
+- **All 17 GitHub Issues:** **CLOSED (`completed`)**
