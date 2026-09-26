@@ -4,9 +4,9 @@
 
 - **Scrum Master & Architect:** Full-Stack Architect (25 Years Experience)
 - **Methodology:** Agile / Issue-Driven Scrum with strict Playwright validation gates
-- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (20 Issues Total)
-- **Total Story Points:** 78 Points
-- **Status:** Issues #1 to #19 Closed (100% Verified); Issue #20 Pushed & Open
+- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (21 Issues Total)
+- **Total Story Points:** 82 Points
+- **Status:** Issues #1 to #20 Closed (100% Verified); Issue #21 Pushed & Open
 
 ```
 +---------------------------------------------------------------------------------------------------------+
@@ -17,7 +17,7 @@
 | SPRINT 3: Engagement Engine (Likes, Multi-Level Comments, Moderation Hub) (Issues #7 - #9)               |
 | SPRINT 4: In-App Notification Center, Edge-Case Hardening & Final Verification (Issues #10 - #11)       |
 | EXTENDED TRACK: Google Auth, Email OTP, Reader Authoring, Bookmarks, Share, Rich Text, Lifecycle        |
-|                 Controls & Custom Delete Modals (Issues #12 - #20)                                      |
+|                 Controls, Custom Delete Modals & Production GIS OAuth (Issues #12 - #21)                 |
 +---------------------------------------------------------------------------------------------------------+
 ```
 
@@ -261,22 +261,34 @@
 
 ### Issue #20: Replace Browser Default Confirm with Custom Confirmation Modal for Delete Actions
 - **Classification:** `frontend`, `enhancement`, `ui/ux` | **Priority:** P1 | **Complexity:** Medium | **Effort:** 3 SP
-- **Status:** Open (Ready for Development) | **GitHub Issue:** [#20](https://github.com/Karthik-mogaveera/blog_app/issues/20)
+- **Status:** Completed (Branch `feature/issue-20-confirmation-modal`, Commit `598ceeb`) | **GitHub Issue:** [#20](https://github.com/Karthik-mogaveera/blog_app/issues/20)
 - **Summary:** Replace native browser `window.confirm()` popups with an accessible, high-aesthetic custom confirmation modal whenever a user or admin triggers a delete action for articles or comments.
 - **Acceptance Criteria:**
-  - [ ] Create reusable `ConfirmationModal.jsx` (or `DeleteModal.jsx`) styled with glassmorphism tokens, backdrop blur, warning icon, and danger actions.
-  - [ ] Replace `window.confirm()` in `AdminDashboardPage.jsx` (`/admin/blogs`).
-  - [ ] Replace `window.confirm()` in `MyStoriesPage.jsx` (`/my-stories`).
-  - [ ] Replace `window.confirm()` in `CommentTree.jsx` (discussions on `/blog/:id`).
-  - [ ] Replace `window.confirm()` in `AdminModerationPage.jsx` (`/admin/comments`).
-  - [ ] Implement accessible keyboard controls (`Escape` to close) and backdrop click dismiss.
-  - [ ] Write and verify automated Playwright E2E tests validating the custom confirmation modal and zero usage of native dialogs.
+  - [x] Create reusable `ConfirmationModal.jsx` (or `DeleteModal.jsx`) styled with glassmorphism tokens, backdrop blur, warning icon, and danger actions.
+  - [x] Replace `window.confirm()` in `AdminDashboardPage.jsx` (`/admin/blogs`).
+  - [x] Replace `window.confirm()` in `MyStoriesPage.jsx` (`/my-stories`).
+  - [x] Replace `window.confirm()` in `CommentTree.jsx` (discussions on `/blog/:id`).
+  - [x] Replace `window.confirm()` in `AdminModerationPage.jsx` (`/admin/comments`).
+  - [x] Implement accessible keyboard controls (`Escape` to close) and backdrop click dismiss.
+  - [x] Write and verify automated Playwright E2E tests validating the custom confirmation modal and zero usage of native dialogs.
+
+### Issue #21: Replace Dummy Google Sign-In Modal with Real Google OAuth (GIS) in Production
+- **Classification:** `frontend`, `backend`, `enhancement`, `authentication` | **Priority:** P0 | **Complexity:** Medium | **Effort:** 4 SP
+- **Status:** Open (Pushed to GitHub) | **GitHub Issue:** [#21](https://github.com/Karthik-mogaveera/blog_app/issues/21)
+- **Summary:** In production deployment (https://blog-app-ashy-xi-19.vercel.app/), clicking the "Continue with Google" button on both Login and Register pages opens a dummy simulation modal (`GoogleAuthModal.jsx`) with mock accounts rather than launching the authentic Google OAuth 2.0 Identity Services (GIS) account picker popup.
+- **Acceptance Criteria:**
+  - [ ] Configure `VITE_GOOGLE_CLIENT_ID` in the Vite client build, `.env.example`, and Vercel Project Environment Variables.
+  - [ ] Update `LoginPage.jsx` and `RegisterPage.jsx` to invoke real Google Identity Services (`window.google.accounts.oauth2.initTokenClient`) when clicking "Continue with Google".
+  - [ ] Restrict the dummy simulation modal (`GoogleAuthModal.jsx`) strictly to automated Playwright test environments (`navigator.webdriver`).
+  - [ ] Ensure authentic Google sign-in completes token exchange via `POST /api/auth/google`, creates/links user account in MongoDB, issues JWT, and redirects smoothly.
+  - [ ] Verify that canceling or closing the Google popup gracefully surfaces error/cancellation feedback without opening dummy accounts.
+  - [ ] Ensure Google Cloud Console OAuth 2.0 Client ID Authorized JavaScript Origins include `https://blog-app-ashy-xi-19.vercel.app`.
 
 ---
 
 ## Final Project Status Summary
-- **Total Issues:** 20
-- **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #20)
-- **Story Points:** 78 Points Total (75 Completed, 3 Open)
-- **Issues #1 to #19:** **CLOSED (`completed`)**
-- **Issue #20:** **OPEN (Active on GitHub)**
+- **Total Issues:** 21
+- **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #21)
+- **Story Points:** 82 Points Total (78 Completed, 4 Open)
+- **Issues #1 to #20:** **CLOSED (`completed`)**
+- **Issue #21:** **OPEN (Active on GitHub)**
