@@ -162,7 +162,7 @@ const CreateBlogPage = () => {
       if (targetStatus === 'published') {
         navigate(`/blog/${data.blog._id}`);
       } else {
-        navigate('/my-stories');
+        navigate('/profile');
       }
     } catch (err) {
       setError(err.message || 'An unexpected error occurred while saving your article.');

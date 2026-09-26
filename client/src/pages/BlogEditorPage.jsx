@@ -228,7 +228,7 @@ const BlogEditorPage = () => {
         if (isAdmin) {
           navigate('/admin/blogs');
         } else {
-          navigate(desiredStatus === 'published' ? `/blog/${id || data.blog?._id || data.blog?.id}` : '/my-stories');
+          navigate(desiredStatus === 'published' ? `/blog/${id || data.blog?._id || data.blog?.id}` : '/profile');
         }
       } else {
         setError(data.message || 'Failed to save article.');
@@ -254,8 +254,8 @@ const BlogEditorPage = () => {
         <div style={{ padding: '2.5rem', background: 'rgba(244, 63, 94, 0.12)', border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: 'var(--radius-lg)', textAlign: 'center' }} id="admin-editor-error-state">
           <h3 style={{ color: '#fb7185', marginBottom: '0.75rem' }}>Unable to Access Article</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{error}</p>
-          <Link to={isAdmin ? "/admin/blogs" : "/my-stories"} className="btn btn-primary" id="btn-back-studio">
-            <ArrowLeft size={16} /> Return to {isAdmin ? 'Blog Studio' : 'My Stories'}
+          <Link to={isAdmin ? "/admin/blogs" : "/profile"} className="btn btn-primary" id="btn-back-studio">
+            <ArrowLeft size={16} /> Return to {isAdmin ? 'Blog Studio' : 'Profile'}
           </Link>
         </div>
       </div>
@@ -266,8 +266,8 @@ const BlogEditorPage = () => {
     <div className="container content-narrow" style={{ paddingBottom: '6rem' }}>
       {/* Top Header */}
       <div className="flex justify-between items-center flex-wrap gap-3" style={{ marginBottom: '2rem' }}>
-        <Link to={isAdmin ? "/admin/blogs" : "/my-stories"} className="btn btn-ghost btn-sm" id="editor-back-btn">
-          <ArrowLeft size={16} /> Back to {isAdmin ? 'Studio' : 'My Stories'}
+        <Link to={isAdmin ? "/admin/blogs" : "/profile"} className="btn btn-ghost btn-sm" id="editor-back-btn">
+          <ArrowLeft size={16} /> Back to {isAdmin ? 'Studio' : 'Profile'}
         </Link>
         <div className="flex items-center gap-2 flex-wrap">
           <button

@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   PenSquare,
-  Bookmark
+  Bookmark,
+  User
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -103,12 +104,12 @@ const Navbar = () => {
                 Saved
               </NavLink>
               <NavLink
-                to="/my-stories"
+                to="/profile"
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                id="nav-link-my-stories"
+                id="nav-link-profile"
               >
-                <BookOpen size={16} />
-                My Stories
+                <User size={16} />
+                Profile
               </NavLink>
             </>
           )}
@@ -157,15 +158,30 @@ const Navbar = () => {
             {user ? (
               <>
                 {/* User Profile Pill */}
-                <div className="flex items-center gap-2" id="nav-user-pill">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 nav-user-pill-link"
+                  id="nav-user-pill"
+                  title="View Profile Hub"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
                   <div className="avatar avatar-sm" title={user.username}>
-                    {user.initials || user.username.slice(0, 2).toUpperCase()}
+                    {user.profilePicture || user.avatar ? (
+                      <img
+                        src={user.profilePicture || user.avatar}
+                        alt={user.username}
+                        id="nav-user-avatar-img"
+                        style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      user.initials || user.username.slice(0, 2).toUpperCase()
+                    )}
                   </div>
                   <div className="flex flex-col" style={{ lineHeight: 1.2 }}>
                     <span className="font-semibold text-sm">{user.username}</span>
                     {isAdmin && <span className="badge badge-admin">Admin</span>}
                   </div>
-                </div>
+                </Link>
 
                 {/* Logout Button */}
                 <button
@@ -264,13 +280,13 @@ const Navbar = () => {
                 <span>Saved Articles</span>
               </NavLink>
               <NavLink
-                to="/my-stories"
+                to="/profile"
                 className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
-                id="nav-mobile-link-my-stories"
+                id="nav-mobile-link-profile"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <BookOpen size={18} />
-                <span>My Stories</span>
+                <User size={18} />
+                <span>Profile</span>
               </NavLink>
             </>
           )}
@@ -279,15 +295,30 @@ const Navbar = () => {
 
           {user ? (
             <div className="nav-mobile-user-section">
-              <div className="flex items-center gap-2" id="nav-mobile-user-pill">
+              <Link
+                to="/profile"
+                className="flex items-center gap-2"
+                id="nav-mobile-user-pill"
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
                 <div className="avatar avatar-sm">
-                  {user.initials || user.username.slice(0, 2).toUpperCase()}
+                  {user.profilePicture || user.avatar ? (
+                    <img
+                      src={user.profilePicture || user.avatar}
+                      alt={user.username}
+                      id="nav-mobile-avatar-img"
+                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    user.initials || user.username.slice(0, 2).toUpperCase()
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold text-sm">{user.username}</span>
                   {isAdmin && <span className="badge badge-admin" style={{ alignSelf: 'flex-start' }}>Admin</span>}
                 </div>
-              </div>
+              </Link>
               <button
                 onClick={() => {
                   handleLogout();

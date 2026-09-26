@@ -2558,6 +2558,191 @@ test.describe.serial('Issue #22: Allow Readers to Edit Their Own Authored Blog P
   });
 });
 
+test.describe.serial('Issue #23: User Profile Hub (Photo, Bio, Integrated Stories & Navigation Streamlining)', () => {
+  const timestamp = Date.now();
+  const testUser = `profile_user_${timestamp}`;
+  const testEmail = `profile_user_${timestamp}@example.com`;
+  const password = 'Password@123';
+
+  const ensureLoggedIn = async (page) => {
+    await page.goto('/login');
+    await page.fill('#login-identifier', testUser);
+    await page.fill('#login-password', password);
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/');
+  };
+
+  test('Navigation streamlining removes standalone My Stories link and directs to /profile', async ({ page }) => {
+    // 1. Register reader
+    await page.goto('/register');
+    await page.fill('#register-username', testUser);
+    await page.fill('#register-email', testEmail);
+    await page.fill('#register-password', password);
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Desktop navigation checks: Standalone "My Stories" link removed, "Profile" link present
+    await expect(page.locator('#nav-link-my-stories')).toHaveCount(0);
+    const profileNavLink = page.locator('#nav-link-profile');
+    await expect(profileNavLink).toBeVisible();
+    await expect(profileNavLink).toContainText('Profile');
+
+    // 3. User profile pill is a link to /profile
+    const userPill = page.locator('#nav-user-pill');
+    await expect(userPill).toBeVisible();
+    await userPill.click();
+    await page.waitForURL('/profile');
+    await expect(page.locator('#profile-username')).toHaveText(testUser);
+
+    // 4. Mobile navigation drawer check: Standalone My Stories removed, Profile link present
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.click('#nav-mobile-toggle');
+    await expect(page.locator('#nav-mobile-drawer')).toBeVisible();
+    await expect(page.locator('#nav-mobile-link-my-stories')).toHaveCount(0);
+    const mobileProfileLink = page.locator('#nav-mobile-link-profile');
+    await expect(mobileProfileLink).toBeVisible();
+
+    // Reset viewport size
+    await page.setViewportSize({ width: 1280, height: 720 });
+  });
+
+  test('User can manage bio and social links on profile page with persistence', async ({ page }) => {
+    await ensureLoggedIn(page);
+    await page.goto('/profile');
+    await expect(page.locator('#profile-username')).toHaveText(testUser);
+    await expect(page.locator('#profile-email')).toHaveText(testEmail);
+    await expect(page.locator('#profile-role-badge')).toContainText('reader');
+
+    // Click Edit Profile
+    await page.click('#btn-edit-profile');
+    await expect(page.locator('#form-edit-profile')).toBeVisible();
+
+    // Fill Bio & Social Links
+    const bioText = 'Full-stack software engineer & tech enthusiast writing about web architecture.';
+    await page.fill('#input-profile-bio', bioText);
+    await page.fill('#input-social-website', 'https://karthik.dev');
+    await page.fill('#input-social-github', 'karthik-mogaveera');
+    await page.fill('#input-social-twitter', 'karthik_tech');
+    await page.fill('#input-social-linkedin', 'karthik-mogaveera');
+
+    // Save Profile
+    await page.click('#btn-save-profile');
+    await expect(page.locator('#form-edit-profile')).not.toBeVisible();
+    await expect(page.locator('#profile-bio-text')).toHaveText(bioText);
+
+    // Verify rendered social link badges
+    await expect(page.locator('#link-social-website')).toBeVisible();
+    await expect(page.locator('#link-social-github')).toBeVisible();
+    await expect(page.locator('#link-social-twitter')).toBeVisible();
+    await expect(page.locator('#link-social-linkedin')).toBeVisible();
+
+    // Verify session persistence across full page reload
+    await page.reload();
+    await expect(page.locator('#profile-bio-text')).toHaveText(bioText);
+    await expect(page.locator('#link-social-website')).toBeVisible();
+  });
+
+  test('User can upload and remove profile photo with immediate navbar sync', async ({ page }) => {
+    await ensureLoggedIn(page);
+    await page.goto('/profile');
+
+    // Create a 1x1 transparent PNG buffer for testing photo upload
+    const samplePngBase64 =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const buffer = Buffer.from(samplePngBase64.split(',')[1], 'base64');
+
+    // Upload photo via hidden file input
+    await page.setInputFiles('#input-avatar-file', {
+      name: 'avatar.png',
+      mimeType: 'image/png',
+      buffer
+    });
+
+    // Verify profile avatar image appears
+    await expect(page.locator('#profile-avatar-image')).toBeVisible();
+
+    // Verify navbar avatar image is updated immediately
+    await expect(page.locator('#nav-user-avatar-img')).toBeVisible();
+
+    // Reload page to verify persistence across sessions
+    await page.reload();
+    await expect(page.locator('#profile-avatar-image')).toBeVisible();
+    await expect(page.locator('#nav-user-avatar-img')).toBeVisible();
+
+    // Remove photo and verify fallback to initials avatar
+    await page.click('#btn-remove-photo');
+    await expect(page.locator('#profile-avatar-initials')).toBeVisible();
+    await expect(page.locator('#profile-avatar-image')).toHaveCount(0);
+  });
+
+  test('Integrated My Stories dashboard allows authoring, toggling publication, editing, and deleting', async ({ page }) => {
+    await ensureLoggedIn(page);
+    // Direct /my-stories route also loads the integrated Profile Hub
+    await page.goto('/my-stories');
+
+    // Verify embedded My Stories section is visible directly under profile details
+    await expect(page.locator('#section-my-stories')).toBeVisible();
+    await expect(page.locator('#profile-stories-heading')).toContainText('My Stories');
+
+    // Initial empty state
+    await expect(page.locator('#btn-empty-write-story')).toBeVisible();
+
+    // Click Write a Story from the profile dashboard
+    await page.click('#btn-write-new-story');
+    await page.waitForURL('/create-blog');
+
+    // Create a draft story
+    const storyTitle = `Integrated Hub Story ${timestamp}`;
+    const storyContent = `Content for integrated hub story testing ${timestamp}`;
+    await page.fill('#input-blog-title', storyTitle);
+    await page.fill('#input-blog-content', storyContent);
+    await page.selectOption('#select-blog-category', 'Design');
+
+    // Save as draft
+    await page.click('#btn-save-draft');
+    await page.waitForURL('/profile');
+
+    // Story should appear in My Stories list with draft badge
+    await expect(page.locator('#my-stories-list')).toBeVisible();
+    await expect(page.locator('.story-item-card', { hasText: storyTitle })).toBeVisible();
+
+    const storyCard = page.locator('.story-item-card', { hasText: storyTitle });
+    await expect(storyCard.locator('.badge-draft')).toHaveText('Draft');
+
+    // Toggle publication to Published
+    const publishToggleBtn = storyCard.locator('button', { hasText: 'Publish' });
+    await publishToggleBtn.click();
+
+    // Verify badge turns to Published
+    await expect(storyCard.locator('.badge-published')).toHaveText('Published');
+    await expect(storyCard.locator('button', { hasText: 'Unpublish' })).toBeVisible();
+
+    // Test filter pills
+    await page.click('#filter-stories-drafts');
+    await expect(page.locator('.story-item-card', { hasText: storyTitle })).toHaveCount(0);
+
+    await page.click('#filter-stories-published');
+    await expect(page.locator('.story-item-card', { hasText: storyTitle })).toBeVisible();
+
+    await page.click('#filter-stories-all');
+    await expect(page.locator('.story-item-card', { hasText: storyTitle })).toBeVisible();
+
+    // Test Delete story flow with ConfirmationModal
+    const deleteBtn = storyCard.locator('button[title="Delete story"]');
+    await deleteBtn.click();
+
+    const confirmModal = page.locator('#confirmation-modal');
+    await expect(confirmModal).toBeVisible();
+    await page.click('#btn-modal-confirm');
+
+    // Verify story is permanently deleted and list shows empty state
+    await expect(confirmModal).not.toBeVisible();
+    await expect(page.locator('.story-item-card', { hasText: storyTitle })).toHaveCount(0);
+    await expect(page.locator('#btn-empty-write-story')).toBeVisible();
+  });
+});
+
+
 
 
 

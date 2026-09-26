@@ -16,6 +16,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import BlogEditorPage from './pages/BlogEditorPage';
 import AdminModerationPage from './pages/AdminModerationPage';
 import CreateBlogPage from './pages/CreateBlogPage';
+import ProfilePage from './pages/ProfilePage';
 import MyStoriesPage from './pages/MyStoriesPage';
 import SavedBlogsPage from './pages/SavedBlogsPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -92,10 +93,18 @@ function App() {
                 />
                 <Route path="/stories/edit/:id" element={<Navigate to="/edit-blog/:id" replace />} />
                 <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/my-stories"
                   element={
                     <ProtectedRoute>
-                      <MyStoriesPage />
+                      <ProfilePage />
                     </ProtectedRoute>
                   }
                 />

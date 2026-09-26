@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -92,11 +92,21 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
-  };
+  }, []);
+
+  const updateUser = useCallback((updatedUser) => {
+    setUser((prev) => {
+      if (!prev) return updatedUser;
+      return {
+        ...prev,
+        ...updatedUser
+      };
+    });
+  }, []);
 
   const isAdmin = user?.role === 'admin';
 
@@ -110,7 +120,8 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         loginWithGoogle,
-        logout
+        logout,
+        updateUser
       }}
     >
       {children}

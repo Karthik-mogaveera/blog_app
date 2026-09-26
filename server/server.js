@@ -11,6 +11,7 @@ const commentRoutes = require('./routes/comments');
 const likeRoutes = require('./routes/likes');
 const notificationRoutes = require('./routes/notifications');
 const savedRoutes = require('./routes/saved');
+const userRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -100,6 +101,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/likes', likeRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/saved', savedRoutes);
+app.use('/api/users', userRoutes);
 
 // Serve static client assets if built
 const clientDistPath = path.join(__dirname, '../client/dist');

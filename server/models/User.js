@@ -33,6 +33,22 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String
     },
+    profilePicture: {
+      type: String,
+      default: ''
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Bio cannot exceed 500 characters'],
+      default: ''
+    },
+    socialLinks: {
+      website: { type: String, trim: true, default: '' },
+      twitter: { type: String, trim: true, default: '' },
+      github: { type: String, trim: true, default: '' },
+      linkedin: { type: String, trim: true, default: '' }
+    },
     role: {
       type: String,
       enum: ['admin', 'reader'],
