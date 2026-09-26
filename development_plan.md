@@ -286,14 +286,14 @@
 
 ### Issue #22: Allow Readers to Edit Their Own Authored Blog Posts
 - **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P0 | **Complexity:** Medium | **Effort:** 3 SP
-- **Status:** Open (Pushed to GitHub) | **GitHub Issue:** [#22](https://github.com/Karthik-mogaveera/blog_app/issues/22)
+- **Status:** Completed (Branch `feature/issue-22-reader-blog-edit`) | **GitHub Issue:** [#22](https://github.com/Karthik-mogaveera/blog_app/issues/22)
 - **Summary:** Empower authenticated readers to edit their existing authored blog posts, modifying title, category, tags, cover image, and content.
 - **Acceptance Criteria:**
-  - [ ] `PUT /api/blogs/:id` permits updates if requester is the original author (`blog.authorId.equals(req.user._id)`) or an admin.
-  - [ ] Provide an "Edit" action on author story cards in dashboard and on article view for the post owner.
-  - [ ] Support loading existing blog data into editor interface with pre-populated fields.
-  - [ ] Restrict non-owners attempting to edit other users' blogs with strict `403 Forbidden`.
-  - [ ] 100% verified via automated Playwright test suite.
+  - [x] `PUT /api/blogs/:id` permits updates if requester is the original author (`blog.authorId.equals(req.user._id)`) or an admin.
+  - [x] Provide an "Edit" action on author story cards in dashboard and on article view for the post owner.
+  - [x] Support loading existing blog data into editor interface with pre-populated fields.
+  - [x] Restrict non-owners attempting to edit other users' blogs with strict `403 Forbidden`.
+  - [x] 100% verified via automated Playwright test suite.
 
 ### Issue #23: User Profile Hub (Photo, Bio, Integrated Stories & Navigation Streamlining)
 - **Classification:** `frontend`, `backend`, `enhancement`, `ui/ux` | **Priority:** P0 | **Complexity:** High | **Effort:** 5 SP
@@ -333,6 +333,6 @@
 ## Final Project Status Summary
 - **Total Issues:** 25
 - **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #25)
-- **Story Points:** 98 Points Total (78 Completed, 20 Open)
-- **Issues #1 to #20:** **CLOSED (`completed`)**
-- **Issues #21 to #25:** **OPEN (Active on GitHub)**
+- **Story Points:** 98 Points Total (81 Completed, 17 Open)
+- **Issues #1 to #20, #22:** **CLOSED (`completed`)**
+- **Issues #21, #23 to #25:** **OPEN (Active on GitHub)**

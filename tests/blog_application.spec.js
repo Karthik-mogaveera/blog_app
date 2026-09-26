@@ -2465,6 +2465,100 @@ test.describe('GitHub Issue #20: Replace Browser Default Confirm with Custom Con
   });
 });
 
+test.describe.serial('Issue #22: Allow Readers to Edit Their Own Authored Blog Posts', () => {
+  const timestamp = Date.now();
+  const readerUser = `edit_reader_${timestamp}`;
+  const readerEmail = `edit_reader_${timestamp}@example.com`;
+  const otherReader = `other_reader_${timestamp}`;
+  const otherEmail = `other_reader_${timestamp}@example.com`;
+  const password = 'Password@123';
+
+  let createdBlogId = '';
+
+  test('Reader can create a story, see Edit button in My Stories, and update it', async ({ page }) => {
+    // 1. Register reader
+    await page.goto('/register');
+    await page.fill('#register-username', readerUser);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', password);
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Author a new blog
+    await page.goto('/create-blog');
+    const initialTitle = `Editable Article ${timestamp}`;
+    const initialContent = `Initial article content before editing ${timestamp}`;
+    await page.fill('#input-blog-title', initialTitle);
+    await page.fill('#input-blog-content', initialContent);
+    await page.selectOption('#select-blog-category', 'Technology');
+    await page.fill('#input-blog-tags', 'editable, technology');
+    await page.click('#btn-publish-reader-blog');
+
+    // Wait for redirect to article page
+    await page.waitForURL(/\/blog\/.+/);
+    const url = page.url();
+    createdBlogId = url.split('/blog/')[1];
+
+    // 3. Verify Edit button is visible on article page for the author
+    const articleEditBtn = page.locator('#btn-edit-article');
+    await expect(articleEditBtn).toBeVisible();
+    await expect(articleEditBtn).toContainText('Edit');
+
+    // 4. Navigate to My Stories and verify Edit button exists
+    await page.goto('/my-stories');
+    const storyCard = page.locator(`#my-story-card-${createdBlogId}`);
+    await expect(storyCard).toBeVisible();
+
+    const storyEditBtn = page.locator(`#btn-edit-story-${createdBlogId}`);
+    await expect(storyEditBtn).toBeVisible();
+
+    // 5. Click Edit button in My Stories
+    await storyEditBtn.click();
+    await page.waitForURL(`/edit-blog/${createdBlogId}`);
+
+    // Verify fields are pre-populated
+    const titleInput = page.locator('#blog-title-input');
+    await expect(titleInput).toHaveValue(initialTitle);
+
+    const categorySelect = page.locator('#blog-category-select');
+    await expect(categorySelect).toHaveValue('Technology');
+
+    // 6. Update the title and content
+    const updatedTitle = `Updated Article Title ${timestamp}`;
+    const updatedContent = `Updated article content after reader edit ${timestamp}`;
+    await titleInput.fill(updatedTitle);
+    await page.fill('#blog-content-textarea', updatedContent);
+    await categorySelect.selectOption('Design');
+
+    // Click Update & Publish
+    await page.click('#editor-publish-btn');
+    await page.waitForURL(new RegExp(`/blog/${createdBlogId}`));
+
+    // 7. Verify updated content on the blog detail page
+    await expect(page.locator('.article-title')).toHaveText(updatedTitle);
+    await expect(page.locator('#article-body-text')).toContainText(updatedContent);
+  });
+
+  test('Non-owner reader is blocked from editing another user blog', async ({ page }) => {
+    // 1. Register second reader
+    await page.goto('/register');
+    await page.fill('#register-username', otherReader);
+    await page.fill('#register-email', otherEmail);
+    await page.fill('#register-password', password);
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Attempt to open edit page of the first reader's blog
+    await page.goto(`/edit-blog/${createdBlogId}`);
+
+    // Verify error state is shown and editing is denied
+    await expect(page.locator('#admin-editor-error-state')).toBeVisible();
+    await expect(page.locator('#admin-editor-error-state')).toContainText(/Unauthorized/i);
+    await expect(page.locator('#btn-back-studio')).toBeVisible();
+  });
+});
+
+
 
 
 

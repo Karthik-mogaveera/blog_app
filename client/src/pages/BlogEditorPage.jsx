@@ -44,7 +44,7 @@ const BlogEditorPage = () => {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!isAdmin) {
+    if (!user) {
       navigate('/login');
       return;
     }
@@ -58,9 +58,20 @@ const BlogEditorPage = () => {
           const data = await res.json();
           if (data.success && data.blog) {
             const b = data.blog;
+            const isOwner = user && (
+              (b.authorId && (b.authorId === user._id || b.authorId._id === user._id || b.authorId.toString() === user._id.toString())) ||
+              b.authorName === user.username
+            );
+
+            if (!isAdmin && !isOwner) {
+              setError('Unauthorized. You can only edit your own articles.');
+              setFetching(false);
+              return;
+            }
+
             setTitle(b.title || '');
             setContent(b.content || '');
-            setAuthorName(b.authorName || 'Admin');
+            setAuthorName(b.authorName || (isAdmin ? 'Admin' : user.username));
             setCategory(b.category || 'General');
             setTagsInput(b.tags ? b.tags.join(', ') : '');
             setCoverImage(b.coverImage || '');
@@ -83,8 +94,12 @@ const BlogEditorPage = () => {
         }
       };
       fetchBlog();
+    } else {
+      if (!isAdmin) {
+        navigate('/create-blog');
+      }
     }
-  }, [id, isEditing, isAdmin, navigate, token]);
+  }, [id, isEditing, isAdmin, user, navigate, token, authLoading]);
 
   // Handle Image File Selection & Compression
   const processImageFile = (file) => {
@@ -210,7 +225,11 @@ const BlogEditorPage = () => {
 
       const data = await res.json();
       if (data.success) {
-        navigate('/admin/blogs');
+        if (isAdmin) {
+          navigate('/admin/blogs');
+        } else {
+          navigate(desiredStatus === 'published' ? `/blog/${id || data.blog?._id || data.blog?.id}` : '/my-stories');
+        }
       } else {
         setError(data.message || 'Failed to save article.');
       }
@@ -235,8 +254,8 @@ const BlogEditorPage = () => {
         <div style={{ padding: '2.5rem', background: 'rgba(244, 63, 94, 0.12)', border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: 'var(--radius-lg)', textAlign: 'center' }} id="admin-editor-error-state">
           <h3 style={{ color: '#fb7185', marginBottom: '0.75rem' }}>Unable to Access Article</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{error}</p>
-          <Link to="/admin/blogs" className="btn btn-primary" id="btn-back-studio">
-            <ArrowLeft size={16} /> Return to Blog Studio
+          <Link to={isAdmin ? "/admin/blogs" : "/my-stories"} className="btn btn-primary" id="btn-back-studio">
+            <ArrowLeft size={16} /> Return to {isAdmin ? 'Blog Studio' : 'My Stories'}
           </Link>
         </div>
       </div>
@@ -247,8 +266,8 @@ const BlogEditorPage = () => {
     <div className="container content-narrow" style={{ paddingBottom: '6rem' }}>
       {/* Top Header */}
       <div className="flex justify-between items-center flex-wrap gap-3" style={{ marginBottom: '2rem' }}>
-        <Link to="/admin/blogs" className="btn btn-ghost btn-sm" id="editor-back-btn">
-          <ArrowLeft size={16} /> Back to Studio
+        <Link to={isAdmin ? "/admin/blogs" : "/my-stories"} className="btn btn-ghost btn-sm" id="editor-back-btn">
+          <ArrowLeft size={16} /> Back to {isAdmin ? 'Studio' : 'My Stories'}
         </Link>
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -324,7 +343,7 @@ const BlogEditorPage = () => {
           </div>
 
           {/* Category & Custom Author Name Row */}
-          <div className="form-grid-2">
+          <div className={isAdmin ? "form-grid-2" : "form-group"}>
             <div className="form-group">
               <label className="form-label" htmlFor="blog-category-select">
                 Category *
@@ -343,19 +362,21 @@ const BlogEditorPage = () => {
               </select>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="blog-author-input">
-                Author Attribution Name
-              </label>
-              <input
-                type="text"
-                id="blog-author-input"
-                className="form-input"
-                placeholder="e.g., Guest Author or Pen Name"
-                value={authorName}
-                onChange={(e) => setAuthorName(e.target.value)}
-              />
-            </div>
+            {isAdmin && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="blog-author-input">
+                  Author Attribution Name
+                </label>
+                <input
+                  type="text"
+                  id="blog-author-input"
+                  className="form-input"
+                  placeholder="e.g., Guest Author or Pen Name"
+                  value={authorName}
+                  onChange={(e) => setAuthorName(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           {/* Tags */}

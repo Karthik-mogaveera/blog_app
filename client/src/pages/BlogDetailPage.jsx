@@ -15,6 +15,7 @@ import {
   LogIn,
   UserPlus,
   Send,
+  Edit3,
   Sparkles
 } from 'lucide-react';
 
@@ -266,12 +267,23 @@ const BlogDetailPage = () => {
 
   return (
     <div className="container content-narrow" style={{ paddingBottom: '6rem' }}>
-      {/* Back Button */}
-      <div style={{ paddingTop: '2rem' }}>
+      {/* Back Button & Author Edit Button */}
+      <div style={{ paddingTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <Link to="/" className="btn btn-ghost btn-sm" id="btn-back-to-articles">
           <ArrowLeft size={16} />
           Back to all articles
         </Link>
+        {user && (user.role === 'admin' || (blog.authorId && (blog.authorId === user._id || blog.authorId._id === user._id || blog.authorId.toString() === user._id.toString())) || blog.authorName === user.username) && (
+          <Link
+            to={user.role === 'admin' ? `/admin/blogs/${blog._id || blog.id}/edit` : `/edit-blog/${blog._id || blog.id}`}
+            id="btn-edit-article"
+            className="btn btn-outline btn-sm"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <Edit3 size={14} />
+            <span>Edit Article</span>
+          </Link>
+        )}
       </div>
 
       {/* Article Header */}

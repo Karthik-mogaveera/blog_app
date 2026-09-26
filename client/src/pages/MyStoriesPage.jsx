@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Trash2,
   ExternalLink,
+  Edit3,
   Plus
 } from 'lucide-react';
 
@@ -247,6 +248,15 @@ const MyStoriesPage = () => {
                       : 'Publish'}
                   </button>
 
+                  <Link
+                    to={`/edit-blog/${blog._id || blog.id}`}
+                    id={`btn-edit-story-${blog._id || blog.id}`}
+                    className="btn btn-ghost btn-sm"
+                    title="Edit article"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <Edit3 size={16} />
+                  </Link>
                   <Link
                     to={`/blog/${blog._id || blog.id}`}
                     id={`btn-view-story-${blog._id || blog.id}`}

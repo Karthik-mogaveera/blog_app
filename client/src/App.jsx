@@ -83,6 +83,15 @@ function App() {
                 />
                 <Route path="/new-story" element={<Navigate to="/create-blog" replace />} />
                 <Route
+                  path="/edit-blog/:id"
+                  element={
+                    <ProtectedRoute>
+                      <BlogEditorPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/stories/edit/:id" element={<Navigate to="/edit-blog/:id" replace />} />
+                <Route
                   path="/my-stories"
                   element={
                     <ProtectedRoute>
