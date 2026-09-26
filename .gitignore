@@ -17,6 +17,7 @@ coverage/
 dist/
 build/
 client/dist/
+.vercel/
 
 # Logs
 npm-debug.log*

@@ -3,18 +3,43 @@ const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Blog = require('./models/Blog');
 
+let cached = global.mongoose;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
+  if (cached.conn && mongoose.connection.readyState === 1) {
+    return cached.conn;
+  }
+
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/blog_application';
+  const sanitizedUri = uri.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
+
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(uri, {
+        serverSelectionTimeoutMS: 5000
+      })
+      .then(async (m) => {
+        console.log(`[Database] MongoDB connected successfully to: ${sanitizedUri}`);
+        try {
+          await seedDefaultAdmin();
+          await seedSampleBlogs();
+        } catch (seedErr) {
+          console.error('[Database] Seeding error:', seedErr.message);
+        }
+        return m;
+      });
+  }
+
   try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000
-    });
-    console.log(`[Database] MongoDB connected successfully to: ${uri}`);
-    await seedDefaultAdmin();
-    await seedSampleBlogs();
+    cached.conn = await cached.promise;
+    return cached.conn;
   } catch (error) {
+    cached.promise = null;
     console.error(`[Database] MongoDB connection error: ${error.message}`);
-    console.error(`[Database] Ensure your MongoDB server is running on ${uri} or update MONGODB_URI in .env`);
+    console.error(`[Database] Ensure your MongoDB server is running on ${sanitizedUri} or update MONGODB_URI in .env`);
     // Do not terminate process; allow retry or health check inspection
   }
 };

@@ -15,13 +15,29 @@ const savedRoutes = require('./routes/saved');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB on startup when running as standalone server
+if (require.main === module) {
+  connectDB();
+}
 
-// Middleware
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((url) => url.trim())
+  : ['http://localhost:5173', 'http://localhost:5000'];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        process.env.NODE_ENV !== 'production'
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -41,9 +57,33 @@ app.use((req, res, next) => {
   next();
 });
 
+// Middleware to ensure database connectivity for serverless invocations
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api') && req.path !== '/api/health') {
+    try {
+      await connectDB();
+    } catch (err) {
+      console.error('[Database Middleware Error]', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection failed. Please verify MONGODB_URI.'
+      });
+    }
+  }
+  next();
+});
+
 // Health Check Endpoint
-app.get('/api/health', (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+app.get('/api/health', async (req, res) => {
+  let dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  if (dbStatus !== 'connected') {
+    try {
+      await connectDB();
+      dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    } catch (err) {
+      dbStatus = 'error: ' + err.message;
+    }
+  }
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
