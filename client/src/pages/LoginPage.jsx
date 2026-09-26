@@ -64,7 +64,7 @@ const LoginPage = () => {
 
   const handleGoogleClick = () => {
     setError('');
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const clientId = import.meta.env.GOOGLE_CLIENT_ID || import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
     if (clientId && window.google?.accounts?.oauth2 && !navigator.webdriver) {
       setGoogleLoading(true);
