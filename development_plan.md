@@ -4,9 +4,9 @@
 
 - **Scrum Master & Architect:** Full-Stack Architect (25 Years Experience)
 - **Methodology:** Agile / Issue-Driven Scrum with strict Playwright validation gates
-- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (21 Issues Total)
-- **Total Story Points:** 82 Points
-- **Status:** Issues #1 to #20 Closed (100% Verified); Issue #21 Pushed & Open
+- **Total Sprints & Tracks:** 4 Core Sprints + 1 Extended Features Track (25 Issues Total)
+- **Total Story Points:** 98 Points
+- **Status:** Issues #1 to #20 Closed (100% Verified); Issues #21 to #25 Pushed & Open
 
 ```
 +---------------------------------------------------------------------------------------------------------+
@@ -16,8 +16,8 @@
 | SPRINT 2: Blog Management Studio, Public Discovery & Pagination Engine (Issues #4 - #6)                 |
 | SPRINT 3: Engagement Engine (Likes, Multi-Level Comments, Moderation Hub) (Issues #7 - #9)               |
 | SPRINT 4: In-App Notification Center, Edge-Case Hardening & Final Verification (Issues #10 - #11)       |
-| EXTENDED TRACK: Google Auth, Email OTP, Reader Authoring, Bookmarks, Share, Rich Text, Lifecycle        |
-|                 Controls, Custom Delete Modals & Production GIS OAuth (Issues #12 - #21)                 |
+| EXTENDED TRACK: Reader Authoring & Editing, Profile Hub, Admin Controls, Reader Discovery, GIS OAuth,   |
+|                 Rich Text, Social Actions & Lifecycle (Issues #12 - #25)                                |
 +---------------------------------------------------------------------------------------------------------+
 ```
 
@@ -284,11 +284,55 @@
   - [ ] Verify that canceling or closing the Google popup gracefully surfaces error/cancellation feedback without opening dummy accounts.
   - [ ] Ensure Google Cloud Console OAuth 2.0 Client ID Authorized JavaScript Origins include `https://blog-app-ashy-xi-19.vercel.app`.
 
+### Issue #22: Allow Readers to Edit Their Own Authored Blog Posts
+- **Classification:** `frontend`, `backend`, `enhancement` | **Priority:** P0 | **Complexity:** Medium | **Effort:** 3 SP
+- **Status:** Open (Pushed to GitHub) | **GitHub Issue:** [#22](https://github.com/Karthik-mogaveera/blog_app/issues/22)
+- **Summary:** Empower authenticated readers to edit their existing authored blog posts, modifying title, category, tags, cover image, and content.
+- **Acceptance Criteria:**
+  - [ ] `PUT /api/blogs/:id` permits updates if requester is the original author (`blog.authorId.equals(req.user._id)`) or an admin.
+  - [ ] Provide an "Edit" action on author story cards in dashboard and on article view for the post owner.
+  - [ ] Support loading existing blog data into editor interface with pre-populated fields.
+  - [ ] Restrict non-owners attempting to edit other users' blogs with strict `403 Forbidden`.
+  - [ ] 100% verified via automated Playwright test suite.
+
+### Issue #23: User Profile Hub (Photo, Bio, Integrated Stories & Navigation Streamlining)
+- **Classification:** `frontend`, `backend`, `enhancement`, `ui/ux` | **Priority:** P0 | **Complexity:** High | **Effort:** 5 SP
+- **Status:** Open (Pushed to GitHub) | **GitHub Issue:** [#23](https://github.com/Karthik-mogaveera/blog_app/issues/23)
+- **Summary:** Create a comprehensive user profile section allowing users to customize their profile photo, display name, and bio. Below the profile details, integrate the "My Stories" section directly so users have a unified dashboard, and remove the standalone "My Stories" tab from the navigation bar.
+- **Acceptance Criteria:**
+  - [ ] Extend User schema in `server/models/User.js` with `bio`, `profilePicture`, and social/portfolio links.
+  - [ ] Implement `GET /api/users/profile` and `PATCH /api/users/profile` endpoints.
+  - [ ] Build unified `ProfilePage.jsx` (`/profile`) featuring profile header (photo, bio, info) and integrated authored stories list.
+  - [ ] Remove standalone "My Stories" navigation link from desktop header and mobile drawer, routing to `/profile`.
+  - [ ] Persist updates to MongoDB and synchronize user session context.
+
+### Issue #24: Admin Reader User Management & Moderation Controls (View, Suspend, Delete Users)
+- **Classification:** `admin`, `frontend`, `backend`, `enhancement` | **Priority:** P1 | **Complexity:** Medium | **Effort:** 4 SP
+- **Status:** Open (Pushed to GitHub) | **GitHub Issue:** [#24](https://github.com/Karthik-mogaveera/blog_app/issues/24)
+- **Summary:** Provide administrators with a dedicated portal (`/admin/users`) to oversee all registered readers, search by username/email, view user activity, suspend accounts, and delete abusive readers.
+- **Acceptance Criteria:**
+  - [ ] Implement `GET /api/users/admin/all` to retrieve paginated list of registered users with activity stats.
+  - [ ] Implement `PATCH /api/users/admin/:id/status` to suspend or re-activate reader accounts.
+  - [ ] Implement `DELETE /api/users/admin/:id` to delete a user account with safe content handling.
+  - [ ] Build `AdminUsersPage.jsx` (`/admin/users`) with search, filter, status toggles, and delete actions with confirmation modals.
+  - [ ] Protect administrative user routes with `auth` and `adminOnly` middleware guards.
+
+### Issue #25: Reader Discovery & Public Profile Search Engine
+- **Classification:** `frontend`, `backend`, `enhancement`, `search` | **Priority:** P1 | **Complexity:** Medium | **Effort:** 4 SP
+- **Status:** Open (Pushed to GitHub) | **GitHub Issue:** [#25](https://github.com/Karthik-mogaveera/blog_app/issues/25)
+- **Summary:** Allow readers and visitors to discover and search for other readers/authors on the platform, view their public profiles (avatar, bio, member since), and browse their published blog catalog.
+- **Acceptance Criteria:**
+  - [ ] Implement `GET /api/users/search?q=:query` returning public reader summaries.
+  - [ ] Implement `GET /api/users/:id/public` returning author public metadata and strictly their **published** articles.
+  - [ ] Create public author profile view (`/author/:id` or `/user/:id`) displaying author bio, avatar, and catalog of published blogs.
+  - [ ] Add an author search bar or discovery section in the catalog/header for finding fellow community writers.
+  - [ ] Ensure sensitive data (`passwordHash`, email, OTP, drafts) is never exposed in public endpoints.
+
 ---
 
 ## Final Project Status Summary
-- **Total Issues:** 21
-- **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #21)
-- **Story Points:** 82 Points Total (78 Completed, 4 Open)
+- **Total Issues:** 25
+- **Total Sprints:** 4 Core Sprints + Extended Track (Issues #12 - #25)
+- **Story Points:** 98 Points Total (78 Completed, 20 Open)
 - **Issues #1 to #20:** **CLOSED (`completed`)**
-- **Issue #21:** **OPEN (Active on GitHub)**
+- **Issues #21 to #25:** **OPEN (Active on GitHub)**
