@@ -147,6 +147,13 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    if (user.status === 'suspended') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been suspended by an administrator. Please contact support.'
+      });
+    }
+
     const token = generateToken(user);
 
     return res.status(200).json({
@@ -245,6 +252,13 @@ router.post('/google', async (req, res) => {
     let user = await User.findOne({ $or: queryConditions });
 
     if (user) {
+      if (user.status === 'suspended') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been suspended by an administrator. Please contact support.'
+        });
+      }
+
       // If user exists, link googleId and avatar if not present
       let updated = false;
       if (googleId && !user.googleId) {

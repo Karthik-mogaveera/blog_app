@@ -19,6 +19,7 @@ import CreateBlogPage from './pages/CreateBlogPage';
 import ProfilePage from './pages/ProfilePage';
 import MyStoriesPage from './pages/MyStoriesPage';
 import SavedBlogsPage from './pages/SavedBlogsPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Protected route wrapper for authenticated readers and admins
@@ -160,6 +161,14 @@ function App() {
                   element={
                     <AdminRoute>
                       <AdminModerationPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <AdminRoute>
+                      <AdminUsersPage />
                     </AdminRoute>
                   }
                 />

@@ -18,7 +18,8 @@ import {
   X,
   PenSquare,
   Bookmark,
-  User
+  User,
+  Users
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -81,6 +82,14 @@ const Navbar = () => {
               >
                 <ShieldCheck size={16} />
                 Moderation
+              </NavLink>
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                id="nav-link-admin-users"
+              >
+                <Users size={16} />
+                Users
               </NavLink>
             </>
           )}
@@ -255,6 +264,15 @@ const Navbar = () => {
               >
                 <ShieldCheck size={18} />
                 <span>Moderation</span>
+              </NavLink>
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
+                id="nav-mobile-link-admin-users"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Users size={18} />
+                <span>Users</span>
               </NavLink>
             </>
           )}

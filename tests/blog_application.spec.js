@@ -2742,6 +2742,209 @@ test.describe.serial('Issue #23: User Profile Hub (Photo, Bio, Integrated Storie
   });
 });
 
+test.describe.serial('Issue #24: Admin Reader User Management & Moderation Controls (View, Suspend, Delete Users)', () => {
+  const timestamp = Date.now();
+  const readerUsername = `moderated_reader_${timestamp}`;
+  const readerEmail = `moderated_reader_${timestamp}@example.com`;
+  const readerPassword = 'Password@123';
+  const adminPassword = 'Admin@123456';
+
+  const loginAsAdmin = async (page) => {
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', adminPassword);
+    await page.click('#login-submit-btn');
+    await page.waitForURL(/\/admin/);
+  };
+
+  test('Registration of reader and navigation to Admin Users Management Directory', async ({ page }) => {
+    // 1. Register a reader account
+    await page.goto('/register');
+    await page.fill('#register-username', readerUsername);
+    await page.fill('#register-email', readerEmail);
+    await page.fill('#register-password', readerPassword);
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Reader creates a blog post so they have authored content for activity metrics
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', `Reader Article ${timestamp}`);
+    await page.fill('#input-blog-content', `Story content by reader ${readerUsername} for testing metrics.`);
+    await page.selectOption('#select-blog-category', 'Technology');
+    await page.click('#btn-submit-blog');
+    await page.waitForURL(/\/blog\//);
+
+    // 3. Logout reader
+    await page.click('#nav-btn-logout');
+    await expect(page.locator('#nav-btn-login')).toBeVisible();
+
+    // 4. Log in as administrator
+    await loginAsAdmin(page);
+
+    // 5. Verify navbar has "Users" link and navigate to /admin/users
+    const navUsersLink = page.locator('#nav-link-admin-users');
+    await expect(navUsersLink).toBeVisible();
+    await navUsersLink.click();
+    await page.waitForURL('/admin/users');
+
+    // 6. Verify directory UI, statistics summary cards, and search filters
+    await expect(page.locator('#admin-users-title')).toContainText(/Directory/i);
+    await expect(page.locator('#stat-total-users')).toBeVisible();
+    await expect(page.locator('#stat-active-users')).toBeVisible();
+    await expect(page.locator('#stat-suspended-users')).toBeVisible();
+    await expect(page.locator('#stat-admin-users')).toBeVisible();
+    await expect(page.locator('#admin-users-table')).toBeVisible();
+
+    // 7. Verify reader appears in directory with role, status badge, and authored blogs count
+    const readerRow = page.locator(`#user-row-${readerUsername}`);
+    await expect(readerRow).toBeVisible();
+    await expect(readerRow.locator('.badge-reader')).toContainText('Reader');
+    await expect(readerRow.locator('.badge-active')).toContainText('Active');
+    await expect(readerRow.locator('.metric-blogs')).toContainText('1');
+
+    // 8. Search filter verification
+    await page.fill('#input-search-users', readerUsername);
+    await expect(page.locator(`#user-row-${readerUsername}`)).toBeVisible();
+    await page.fill('#input-search-users', 'non_existent_search_query_xyz');
+    await expect(page.locator('#admin-users-empty')).toBeVisible();
+    await page.click('#btn-clear-search');
+    await expect(page.locator(`#user-row-${readerUsername}`)).toBeVisible();
+  });
+
+  test('Admin can suspend a reader account, blocking their login session with 403 Forbidden', async ({ page }) => {
+    // 1. Log in as administrator
+    await loginAsAdmin(page);
+    await page.goto('/admin/users');
+
+    // 2. Locate reader row and click Suspend
+    const readerRow = page.locator(`#user-row-${readerUsername}`);
+    await expect(readerRow).toBeVisible();
+    const suspendBtn = readerRow.locator(`button[id^="btn-suspend-"]`);
+    await expect(suspendBtn).toContainText('Suspend');
+    await suspendBtn.click();
+
+    // 3. Confirm suspension in modal
+    const confirmModal = page.locator('#confirmation-modal');
+    await expect(confirmModal).toBeVisible();
+    await page.click('#btn-modal-confirm');
+    await expect(confirmModal).not.toBeVisible();
+
+    // 4. Verify status badge updates to Suspended and button becomes Reactivate
+    await expect(readerRow.locator('.badge-suspended')).toContainText('Suspended');
+    const reactivateBtn = readerRow.locator(`button[id^="btn-reactivate-"]`);
+    await expect(reactivateBtn).toContainText('Reactivate');
+
+    // 5. Logout admin
+    await page.click('#nav-btn-logout');
+
+    // 6. Attempt to log in with suspended reader account
+    await page.goto('/login');
+    await page.fill('#login-identifier', readerUsername);
+    await page.fill('#login-password', readerPassword);
+    await page.click('#login-submit-btn');
+
+    // 7. Verify 403 / Account suspended error is displayed and reader cannot access platform
+    const errorBanner = page.locator('#login-error-banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText(/suspended/i);
+    expect(page.url()).toContain('/login');
+  });
+
+  test('Admin can re-activate a suspended reader account, restoring their login access', async ({ page }) => {
+    // 1. Log in as administrator
+    await loginAsAdmin(page);
+    await page.goto('/admin/users');
+
+    // 2. Filter by Suspended status
+    await page.selectOption('#select-status-filter', 'suspended');
+    const readerRow = page.locator(`#user-row-${readerUsername}`);
+    await expect(readerRow).toBeVisible();
+
+    // 3. Click Reactivate button
+    const reactivateBtn = readerRow.locator(`button[id^="btn-reactivate-"]`);
+    await reactivateBtn.click();
+
+    // 4. Confirm reactivation in modal
+    const confirmModal = page.locator('#confirmation-modal');
+    await expect(confirmModal).toBeVisible();
+    await page.click('#btn-modal-confirm');
+    await expect(confirmModal).not.toBeVisible();
+
+    // 5. Reset status filter to all and verify badge is Active again
+    await page.selectOption('#select-status-filter', 'all');
+    await expect(readerRow.locator('.badge-active')).toContainText('Active');
+
+    // 6. Logout admin
+    await page.click('#nav-btn-logout');
+
+    // 7. Verify reader can now successfully log in
+    await page.goto('/login');
+    await page.fill('#login-identifier', readerUsername);
+    await page.fill('#login-password', readerPassword);
+    await page.click('#login-submit-btn');
+    await page.waitForURL('/');
+    await expect(page.locator('#nav-user-pill')).toContainText(readerUsername);
+
+    // Logout reader
+    await page.click('#nav-btn-logout');
+  });
+
+  test('Admin self-protection: Admin cannot suspend or delete admin accounts', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/admin/users');
+
+    // Filter by Administrator role to locate admin account row
+    await page.selectOption('#select-user-role', 'admin');
+    await page.click('#btn-apply-filters');
+
+    const adminRow = page.locator('#user-row-admin');
+    await expect(adminRow).toBeVisible();
+
+    // Suspend button should be disabled for admins with proper title / explanation
+    const suspendBtn = adminRow.locator(`button[id^="btn-suspend-"]`);
+    await expect(suspendBtn).toBeDisabled();
+
+    // Delete button should be disabled for admins
+    const deleteBtn = adminRow.locator(`button[id^="btn-delete-"]`);
+    await expect(deleteBtn).toBeDisabled();
+  });
+
+  test('Admin can permanently delete a reader with cascade cleanup of authored data', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/admin/users');
+
+    const readerRow = page.locator(`#user-row-${readerUsername}`);
+    await expect(readerRow).toBeVisible();
+
+    // Click Delete button
+    const deleteBtn = readerRow.locator(`button[id^="btn-delete-"]`);
+    await deleteBtn.click();
+
+    // Verify confirmation modal warns about permanent removal
+    const confirmModal = page.locator('#confirmation-modal');
+    await expect(confirmModal).toBeVisible();
+    await expect(confirmModal).toContainText('Permanently Delete User');
+    await page.click('#btn-modal-confirm');
+    await expect(confirmModal).not.toBeVisible();
+
+    // Verify reader row is removed from directory
+    await expect(page.locator(`#user-row-${readerUsername}`)).toHaveCount(0);
+
+    // Logout admin
+    await page.click('#nav-btn-logout');
+
+    // Verify reader account is completely removed from database (cannot login)
+    await page.goto('/login');
+    await page.fill('#login-identifier', readerUsername);
+    await page.fill('#login-password', readerPassword);
+    await page.click('#login-submit-btn');
+
+    const errorBanner = page.locator('#login-error-banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText('Invalid credentials');
+  });
+});
+
 
 
 

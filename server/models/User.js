@@ -54,6 +54,11 @@ const userSchema = new mongoose.Schema(
       enum: ['admin', 'reader'],
       default: 'reader'
     },
+    status: {
+      type: String,
+      enum: ['active', 'suspended'],
+      default: 'active'
+    },
     resetOtp: {
       type: String
     },

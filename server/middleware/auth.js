@@ -32,6 +32,13 @@ const authenticate = async (req, res, next) => {
       });
     }
 
+    if (user.status === 'suspended') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been suspended by an administrator. Please contact support.'
+      });
+    }
+
     req.user = user;
     next();
   } catch (error) {
@@ -68,7 +75,7 @@ const optionalAuth = async (req, res, next) => {
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
       const user = await User.findById(decoded.id).select('-passwordHash');
-      if (user) {
+      if (user && user.status !== 'suspended') {
         req.user = user;
       }
     }
