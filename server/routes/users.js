@@ -98,6 +98,187 @@ router.patch('/profile', authenticate, async (req, res) => {
 });
 
 // ============================================================================
+// PUBLIC READER DISCOVERY & AUTHOR PROFILE ENDPOINTS
+// ============================================================================
+
+// @route   GET /api/users/search
+// @desc    Search active readers/authors by username or bio for discovery
+// @access  Public
+router.get('/search', async (req, res) => {
+  try {
+    const q = req.query.q ? String(req.query.q).trim() : '';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, Math.min(50, parseInt(req.query.limit) || 12));
+    const skip = (page - 1) * limit;
+
+    // Filter: active users only (exclude suspended), sensitive fields stripped
+    const filter = {
+      status: { $ne: 'suspended' }
+    };
+
+    if (q) {
+      const regex = new RegExp(q, 'i');
+      filter.$or = [{ username: regex }, { bio: regex }];
+    }
+
+    const total = await User.countDocuments(filter);
+    const rawUsers = await User.find(filter)
+      .select('username avatar profilePicture bio socialLinks role createdAt')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const userIds = rawUsers.map((u) => u._id);
+
+    // Compute total published articles for each discovered author
+    const publishedBlogsAgg = await Blog.aggregate([
+      {
+        $match: {
+          authorId: { $in: userIds },
+          status: 'published'
+        }
+      },
+      {
+        $group: {
+          _id: '$authorId',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const publishedMap = new Map(publishedBlogsAgg.map((item) => [item._id.toString(), item.count]));
+
+    const authors = rawUsers.map((u) => {
+      const initials = u.username ? u.username.slice(0, 2).toUpperCase() : '??';
+      const picture = u.profilePicture || u.avatar || '';
+      return {
+        _id: u._id,
+        id: u._id,
+        username: u.username,
+        bio: u.bio || '',
+        avatar: picture,
+        profilePicture: picture,
+        initials,
+        role: u.role || 'reader',
+        socialLinks: u.socialLinks || {},
+        createdAt: u.createdAt,
+        publishedArticlesCount: publishedMap.get(u._id.toString()) || 0
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      authors,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    });
+  } catch (error) {
+    console.error('Error searching reader authors:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to search authors.'
+    });
+  }
+});
+
+// @route   GET /api/users/:id/public
+// @desc    Get public reader profile metadata & strictly their published articles
+// @access  Public
+router.get('/:id/public', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let user = null;
+
+    // Check if valid ObjectId or query by username as fallback
+    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    if (isValidObjectId) {
+      user = await User.findById(id).select('username avatar profilePicture bio socialLinks role status createdAt').lean();
+    }
+    if (!user) {
+      user = await User.findOne({ username: id }).select('username avatar profilePicture bio socialLinks role status createdAt').lean();
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Author profile not found.'
+      });
+    }
+
+    if (user.status === 'suspended') {
+      return res.status(404).json({
+        success: false,
+        message: 'This author profile is not available.'
+      });
+    }
+
+    // Fetch strictly published blogs authored by this user (drafts strictly excluded)
+    const rawBlogs = await Blog.find({
+      $or: [{ authorId: user._id }, { authorName: user.username }],
+      status: 'published'
+    })
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .lean();
+
+    const blogIds = rawBlogs.map((b) => b._id);
+
+    // Enrich with likes and comments metrics
+    const [likesAgg, commentsAgg] = await Promise.all([
+      Like.aggregate([
+        { $match: { blogId: { $in: blogIds } } },
+        { $group: { _id: '$blogId', count: { $sum: 1 } } }
+      ]),
+      Comment.aggregate([
+        { $match: { blogId: { $in: blogIds } } },
+        { $group: { _id: '$blogId', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const likesMap = new Map(likesAgg.map((l) => [l._id.toString(), l.count]));
+    const commentsMap = new Map(commentsAgg.map((c) => [c._id.toString(), c.count]));
+
+    const publishedBlogs = rawBlogs.map((b) => ({
+      ...b,
+      id: b._id,
+      likeCount: likesMap.get(b._id.toString()) || 0,
+      commentCount: commentsMap.get(b._id.toString()) || 0
+    }));
+
+    const initials = user.username ? user.username.slice(0, 2).toUpperCase() : '??';
+    const picture = user.profilePicture || user.avatar || '';
+
+    return res.status(200).json({
+      success: true,
+      author: {
+        _id: user._id,
+        id: user._id,
+        username: user.username,
+        bio: user.bio || '',
+        avatar: picture,
+        profilePicture: picture,
+        initials,
+        role: user.role || 'reader',
+        socialLinks: user.socialLinks || {},
+        createdAt: user.createdAt,
+        totalArticles: publishedBlogs.length
+      },
+      blogs: publishedBlogs
+    });
+  } catch (error) {
+    console.error('Error fetching public author profile:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch author profile.'
+    });
+  }
+});
+
+// ============================================================================
 // ADMIN USER MODERATION & MANAGEMENT ENDPOINTS
 // ============================================================================
 

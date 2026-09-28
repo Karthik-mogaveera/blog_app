@@ -2945,6 +2945,165 @@ test.describe.serial('Issue #24: Admin Reader User Management & Moderation Contr
   });
 });
 
+test.describe.serial('Issue #25: Reader Discovery & Public Profile Search Engine', () => {
+  const timestamp = Date.now();
+  const testAuthorUsername = `discover_writer_${timestamp}`;
+  const testAuthorEmail = `discover_writer_${timestamp}@example.com`;
+  const authorPassword = 'Password@123';
+  const authorBio = 'Full-stack explorer and distributed systems enthusiast.';
+  const publishedStoryTitle = `Deep Dive into Event Driven Architecture ${timestamp}`;
+  const draftStoryTitle = `Secret Unreleased Draft ${timestamp}`;
+
+  test('Public discovery API: GET /api/users/search and sensitive data sanitization', async ({ request }) => {
+    // 1. Check public search endpoint responds ok
+    const res = await request.get('/api/users/search?q=');
+    expect(res.ok()).toBeTruthy();
+    expect(res.status()).toBe(200);
+
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(Array.isArray(data.authors)).toBe(true);
+    expect(data.pagination).toBeDefined();
+
+    // Verify sensitive fields are NEVER exposed in search results
+    data.authors.forEach((author) => {
+      expect(author.passwordHash).toBeUndefined();
+      expect(author.resetOtp).toBeUndefined();
+      expect(author.email).toBeUndefined();
+      expect(typeof author.username).toBe('string');
+      expect(typeof author.publishedArticlesCount).toBe('number');
+    });
+  });
+
+  test('Author registration, profile setup, publishing stories and saving draft', async ({ page }) => {
+    // 1. Register new author
+    await page.goto('/register');
+    await page.fill('#register-username', testAuthorUsername);
+    await page.fill('#register-email', testAuthorEmail);
+    await page.fill('#register-password', authorPassword);
+    await page.click('#register-submit-btn');
+    await page.waitForURL('/');
+
+    // 2. Set author bio in Profile Hub
+    await page.goto('/profile');
+    await page.click('#btn-edit-profile');
+    await page.fill('#input-profile-bio', authorBio);
+    await page.fill('#input-social-website', 'https://chroniclereader.dev');
+    await page.fill('#input-social-github', testAuthorUsername);
+    await page.click('#btn-save-profile');
+    await expect(page.locator('#profile-bio-text')).toHaveText(authorBio);
+
+    // 3. Create published story
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', publishedStoryTitle);
+    await page.fill('#input-blog-content', 'Comprehensive examination of events, brokers, and streaming queues.');
+    await page.selectOption('#select-blog-category', 'Technology');
+    await page.click('#btn-submit-blog');
+    await page.waitForURL(/\/blog\//);
+
+    // 4. Create a draft story (which should NEVER appear in public profiles)
+    await page.goto('/create-blog');
+    await page.fill('#input-blog-title', draftStoryTitle);
+    await page.fill('#input-blog-content', 'Draft content work in progress confidential ideas.');
+    await page.selectOption('#select-blog-category', 'Technology');
+    await page.click('#btn-save-draft');
+    await page.waitForURL('/profile');
+
+    // Verify draft is visible only in author private profile
+    await expect(page.locator('.story-item-card', { hasText: draftStoryTitle })).toBeVisible();
+
+    // Logout author
+    await page.click('#nav-btn-logout');
+    await expect(page.locator('#nav-btn-login')).toBeVisible();
+  });
+
+  test('Discovery search engine on HomePage finds author and displays author card', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Switch to "Discover Writers & Readers" search tab
+    const authorSearchTab = page.locator('#tab-search-authors');
+    await expect(authorSearchTab).toBeVisible();
+    await authorSearchTab.click();
+
+    // 2. Verify author discovery section and search input are visible
+    await expect(page.locator('#section-author-discovery')).toBeVisible();
+    await expect(page.locator('#author-search-input')).toBeVisible();
+
+    // 3. Search for author by username
+    await page.fill('#author-search-input', testAuthorUsername);
+    await page.click('#author-search-submit-btn');
+
+    // 4. Verify author card is displayed with bio and published story count
+    const authorCard = page.locator(`#author-card-${testAuthorUsername}`);
+    await expect(authorCard).toBeVisible();
+    await expect(authorCard.locator('.author-card-name')).toHaveText(testAuthorUsername);
+    await expect(authorCard.locator('p')).toContainText(authorBio);
+    await expect(authorCard).toContainText('1 Stories');
+
+    // 5. Test empty search query state
+    await page.fill('#author-search-input', 'non_existent_writer_xyz_999');
+    await page.click('#author-search-submit-btn');
+    await expect(page.locator('#author-discovery-empty')).toBeVisible();
+
+    // 6. Clear search
+    await page.click('#author-discovery-empty button');
+    await expect(page.locator(`#author-card-${testAuthorUsername}`)).toBeVisible();
+  });
+
+  test('Public Author Profile view (/author/:id) displays published articles and strictly excludes drafts', async ({ page }) => {
+    // Navigate to public author profile view
+    await page.goto(`/author/${testAuthorUsername}`);
+
+    // Verify public header details
+    await expect(page.locator('#public-author-header')).toBeVisible();
+    await expect(page.locator('#public-author-username')).toHaveText(testAuthorUsername);
+    await expect(page.locator('#public-author-bio')).toHaveText(authorBio);
+    await expect(page.locator('#public-author-role-badge')).toContainText(/Writer/i);
+    await expect(page.locator('#public-author-member-since')).toBeVisible();
+    await expect(page.locator('#author-link-website')).toBeVisible();
+    await expect(page.locator('#author-link-github')).toBeVisible();
+
+    // Verify published articles are shown
+    await expect(page.locator('#public-author-blogs-grid')).toBeVisible();
+    await expect(page.locator('.blog-card-title', { hasText: publishedStoryTitle })).toBeVisible();
+
+    // CRITICAL: Verify unpublished drafts are strictly excluded from public view
+    await expect(page.locator('.blog-card-title', { hasText: draftStoryTitle })).toHaveCount(0);
+    await expect(page.locator(`text=${draftStoryTitle}`)).toHaveCount(0);
+  });
+
+  test('Public Profile API: GET /api/users/:id/public strictly protects sensitive data', async ({ request }) => {
+    const res = await request.get(`/api/users/${testAuthorUsername}/public`);
+    expect(res.ok()).toBeTruthy();
+    expect(res.status()).toBe(200);
+
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.author).toBeDefined();
+    expect(data.author.username).toBe(testAuthorUsername);
+
+    // Verify sensitive data is never returned
+    expect(data.author.passwordHash).toBeUndefined();
+    expect(data.author.resetOtp).toBeUndefined();
+    expect(data.author.email).toBeUndefined();
+
+    // Verify articles list only contains published blogs
+    expect(Array.isArray(data.blogs)).toBe(true);
+    data.blogs.forEach((blog) => {
+      expect(blog.status).toBe('published');
+    });
+  });
+
+  test('Non-existent author public route displays graceful 404', async ({ page }) => {
+    await page.goto('/author/non_existent_author_profile_404_xyz');
+    await expect(page.locator('h1')).toContainText('404');
+    await expect(page.locator('h2')).toContainText('Author Not Found');
+    const returnBtn = page.locator('#btn-back-home-404');
+    await expect(returnBtn).toBeVisible();
+  });
+});
+
+
 
 
 

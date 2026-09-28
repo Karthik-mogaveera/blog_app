@@ -20,6 +20,7 @@ import ProfilePage from './pages/ProfilePage';
 import MyStoriesPage from './pages/MyStoriesPage';
 import SavedBlogsPage from './pages/SavedBlogsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import PublicProfilePage from './pages/PublicProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Protected route wrapper for authenticated readers and admins
@@ -73,6 +74,8 @@ function App() {
                 {/* Public Catalog & Reading Routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/blog/:id" element={<BlogDetailPage />} />
+                <Route path="/author/:id" element={<PublicProfilePage />} />
+                <Route path="/user/:id" element={<PublicProfilePage />} />
 
                 {/* Reader Story Creation & Dashboard Routes */}
                 <Route

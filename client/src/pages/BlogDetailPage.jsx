@@ -300,15 +300,22 @@ const BlogDetailPage = () => {
         <h1 className="article-title">{blog.title}</h1>
 
         <div className="article-author-meta">
-          <div className="avatar avatar-sm">
-            {blog.authorName ? blog.authorName.slice(0, 2).toUpperCase() : 'A'}
-          </div>
-          <div>
-            <span className="font-bold text-primary">{blog.authorName || 'Admin'}</span>
-            <span className="text-xs text-muted" style={{ display: 'block' }}>
-              Published on {formattedDate}
-            </span>
-          </div>
+          <Link
+            to={`/author/${blog.authorId?._id || blog.authorId || blog.authorName || 'Admin'}`}
+            id="article-author-link"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit' }}
+            title={`View ${blog.authorName || 'Admin'}'s public profile`}
+          >
+            <div className="avatar avatar-sm">
+              {blog.authorName ? blog.authorName.slice(0, 2).toUpperCase() : 'A'}
+            </div>
+            <div>
+              <span className="font-bold text-primary hover:underline">{blog.authorName || 'Admin'}</span>
+              <span className="text-xs text-muted" style={{ display: 'block' }}>
+                Published on {formattedDate}
+              </span>
+            </div>
+          </Link>
         </div>
 
         {/* Optional Cover Image */}

@@ -1747,4 +1747,77 @@
   #profile-username {
     font-size: 1.45rem !important;
   }
+}
+
+/* ==========================================================================
+   Issue #25: Author Discovery & Public Profile Engine Styles
+   ========================================================================== */
+
+.author-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+
+.author-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.author-card-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  border: 2px solid var(--border-color);
+}
+
+.author-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.author-discovery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.public-author-header {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem 2rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .public-author-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1.25rem;
+  }
 }

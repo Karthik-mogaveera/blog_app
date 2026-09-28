@@ -74,12 +74,19 @@ const BlogCard = ({ blog, onTagClick, layout = 'grid' }) => {
           </div>
         )}
 
-        {/* Footer: Author & Engagement Stats */}
-        <div className="blog-card-footer">
-          <div className="flex items-center gap-1 text-secondary">
-            <User size={13} />
-            <span className="font-medium text-xs">{blog.authorName || 'Admin'}</span>
-          </div>
+          {/* Footer: Author & Engagement Stats */}
+          <div className="blog-card-footer">
+            <Link
+              to={`/author/${blog.authorId?._id || blog.authorId || blog.authorName || 'Admin'}`}
+              className="flex items-center gap-1 text-secondary author-link"
+              id={`blog-card-author-link-${blog._id || blog.id}`}
+              onClick={(e) => e.stopPropagation()}
+              title={`View ${blog.authorName || 'Admin'}'s public profile`}
+              style={{ textDecoration: 'none' }}
+            >
+              <User size={13} />
+              <span className="font-medium text-xs hover:text-primary">{blog.authorName || 'Admin'}</span>
+            </Link>
 
           <div className="blog-card-stats">
             <span className="stat-item text-xs" title={`${blog.likeCount || 0} likes`}>
