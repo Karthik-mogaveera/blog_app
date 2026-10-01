@@ -2855,7 +2855,8 @@ test.describe.serial('Issue #24: Admin Reader User Management & Moderation Contr
     await loginAsAdmin(page);
     await page.goto('/admin/users');
 
-    // 2. Filter by Suspended status
+    // 2. Open filter options and filter by Suspended status
+    await page.click('#btn-apply-filters');
     await page.selectOption('#select-status-filter', 'suspended');
     const readerRow = page.locator(`#user-row-${readerUsername}`);
     await expect(readerRow).toBeVisible();
@@ -2894,8 +2895,8 @@ test.describe.serial('Issue #24: Admin Reader User Management & Moderation Contr
     await page.goto('/admin/users');
 
     // Filter by Administrator role to locate admin account row
-    await page.selectOption('#select-user-role', 'admin');
     await page.click('#btn-apply-filters');
+    await page.selectOption('#select-user-role', 'admin');
 
     const adminRow = page.locator('#user-row-admin');
     await expect(adminRow).toBeVisible();
@@ -3103,15 +3104,88 @@ test.describe.serial('Issue #25: Reader Discovery & Public Profile Search Engine
   });
 });
 
+test.describe.serial('Admin Users: Filter Button Options Drawer & Modern Toolbar', () => {
+  const adminPassword = 'Admin@123456';
+  const loginAsAdmin = async (page) => {
+    await page.goto('/login');
+    await page.fill('#login-identifier', 'admin');
+    await page.fill('#login-password', adminPassword);
+    await page.click('#login-submit-btn');
+    await page.waitForURL(/\/admin/);
+  };
 
+  test('Users tab displays a sleek, consistent toolbar and pressing Filter button reveals filter options', async ({ page }) => {
+    // 1. Log in as administrator
+    await loginAsAdmin(page);
+    await page.goto('/admin/users');
 
+    // 2. Verify toolbar structure & design consistency
+    const toolbar = page.locator('#admin-users-toolbar');
+    await expect(toolbar).toBeVisible();
+    await expect(page.locator('#input-search-users')).toBeVisible();
+    await expect(page.locator('#input-search-users')).toHaveAttribute('placeholder', /Search by username/i);
 
+    const filterBtn = page.locator('#btn-apply-filters');
+    await expect(filterBtn).toBeVisible();
+    await expect(filterBtn).toContainText('Filter');
+    await expect(page.locator('#btn-search-users')).toBeVisible();
+    await expect(page.locator('#btn-refresh-users')).toBeVisible();
 
+    // 3. Verify filter options drawer is initially closed
+    await expect(page.locator('#admin-filter-drawer')).not.toBeVisible();
 
+    // 4. Press the Filter button -> it must reveal options to filter the table
+    await filterBtn.click();
+    const filterDrawer = page.locator('#admin-filter-drawer');
+    await expect(filterDrawer).toBeVisible();
 
+    // 5. Verify all filtering options are available inside drawer
+    await expect(page.locator('#select-status-filter')).toBeVisible();
+    await expect(page.locator('#select-user-role')).toBeVisible();
+    await expect(page.locator('#select-user-sort')).toBeVisible();
+    await expect(page.locator('#select-activity-filter')).toBeVisible();
+    await expect(page.locator('#btn-close-filter-drawer')).toBeVisible();
 
+    // 6. Test filtering the table by role: select 'admin'
+    await page.selectOption('#select-user-role', 'admin');
+    await expect(page.locator('#user-row-admin')).toBeVisible();
 
+    // Verify active filter badge on filter button shows '1'
+    const badge = page.locator('#badge-active-filters-count');
+    await expect(badge).toBeVisible();
+    await expect(badge).toHaveText('1');
 
+    // Verify active filter chips bar appears with 'Role: Administrator'
+    const chipsBar = page.locator('#active-filter-chips');
+    await expect(chipsBar).toBeVisible();
+    await expect(chipsBar).toContainText('Role: Administrator');
 
+    // 7. Select sort order 'oldest' -> active count becomes '2'
+    await page.selectOption('#select-user-sort', 'oldest');
+    await expect(badge).toHaveText('2');
+    await expect(chipsBar).toContainText('Sort: Oldest');
 
+    // 8. Remove the Role filter via active chip's remove button
+    const removeRoleBtn = chipsBar.locator('.active-filter-chip', { hasText: 'Role' }).locator('button');
+    await removeRoleBtn.click();
+    await expect(badge).toHaveText('1');
+    await expect(chipsBar).not.toContainText('Role: Administrator');
 
+    // 9. Reset all filters via Reset button
+    await page.click('#btn-reset-filters');
+    await expect(page.locator('#active-filter-chips')).not.toBeVisible();
+    await expect(badge).not.toBeVisible();
+
+    // 10. Close the drawer
+    await page.click('#btn-close-filter-drawer');
+    await expect(filterDrawer).not.toBeVisible();
+
+    // 11. Test search bar clear (X) button
+    await page.fill('#input-search-users', 'test_search_term');
+    const clearBtn = page.locator('#btn-clear-search');
+    await expect(clearBtn).toBeVisible();
+    await clearBtn.click();
+    await expect(page.locator('#input-search-users')).toHaveValue('');
+    await expect(clearBtn).not.toBeVisible();
+  });
+});

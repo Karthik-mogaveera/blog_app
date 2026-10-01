@@ -19,7 +19,13 @@ import {
   Filter,
   RefreshCw,
   Mail,
-  User as UserIcon
+  User as UserIcon,
+  ChevronDown,
+  SlidersHorizontal,
+  ArrowUpDown,
+  X,
+  RotateCcw,
+  Shield
 } from 'lucide-react';
 
 const AdminUsersPage = () => {
@@ -44,10 +50,21 @@ const AdminUsersPage = () => {
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState({ type: '', message: '' });
 
-  // Filters
+  // Filters & Sorting
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'suspended'
   const [roleFilter, setRoleFilter] = useState('all'); // 'all', 'reader', 'admin'
+  const [sortFilter, setSortFilter] = useState('newest'); // 'newest', 'oldest', 'username_asc', 'username_desc', 'most_blogs', 'most_comments'
+  const [activityFilter, setActivityFilter] = useState('all'); // 'all', 'writers', 'commenters', 'inactive'
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Active filters counting
+  const activeFiltersCount =
+    (statusFilter !== 'all' ? 1 : 0) +
+    (roleFilter !== 'all' ? 1 : 0) +
+    (sortFilter !== 'newest' ? 1 : 0) +
+    (activityFilter !== 'all' ? 1 : 0);
+  const hasActiveFilters = activeFiltersCount > 0 || Boolean(searchQuery.trim());
 
   // Action states
   const [actionLoading, setActionLoading] = useState(null);
@@ -55,7 +72,7 @@ const AdminUsersPage = () => {
   const [userToToggle, setUserToToggle] = useState(null);
 
   const fetchUsers = useCallback(
-    async (targetPage = 1) => {
+    async (targetPage = 1, overrideSearch = null) => {
       setLoading(true);
       setError('');
       try {
@@ -63,9 +80,12 @@ const AdminUsersPage = () => {
           page: targetPage,
           limit: pagination.limit
         });
-        if (searchQuery.trim()) queryParams.set('search', searchQuery.trim());
+        const query = overrideSearch !== null ? overrideSearch : searchQuery;
+        if (query && query.trim()) queryParams.set('search', query.trim());
         if (statusFilter !== 'all') queryParams.set('status', statusFilter);
         if (roleFilter !== 'all') queryParams.set('role', roleFilter);
+        if (sortFilter !== 'newest') queryParams.set('sort', sortFilter);
+        if (activityFilter !== 'all') queryParams.set('activity', activityFilter);
 
         const res = await fetch(`/api/users/admin/all?${queryParams.toString()}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -85,7 +105,7 @@ const AdminUsersPage = () => {
         setLoading(false);
       }
     },
-    [token, searchQuery, statusFilter, roleFilter, pagination.limit]
+    [token, searchQuery, statusFilter, roleFilter, sortFilter, activityFilter, pagination.limit]
   );
 
   useEffect(() => {
@@ -100,6 +120,15 @@ const AdminUsersPage = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     fetchUsers(1);
+  };
+
+  // Reset all filters to default
+  const handleResetAllFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setRoleFilter('all');
+    setSortFilter('newest');
+    setActivityFilter('all');
   };
 
   // Toggle user suspension status
@@ -378,122 +407,349 @@ const AdminUsersPage = () => {
       </div>
 
       {/* Search & Filters Toolbar */}
-      <div
-        className="card"
-        style={{
-          padding: '1.25rem',
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-lg)',
-          marginBottom: '1.75rem'
-        }}
-      >
-        <form
-          onSubmit={handleSearchSubmit}
-          style={{
-            display: 'flex',
-            gap: '1rem',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          {/* Keyword Search */}
-          <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-            <Search
-              size={16}
-              style={{
-                position: 'absolute',
-                left: '0.85rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-muted)'
-              }}
-            />
-            <input
-              type="text"
-              id="input-search-users"
-              placeholder="Search by username or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="form-control"
-              style={{
-                paddingLeft: '2.5rem',
-                width: '100%',
-                fontSize: '0.9rem',
-                background: 'var(--bg-elevated)'
-              }}
-            />
-          </div>
+      <div className="admin-toolbar-card" id="admin-users-toolbar">
+        <form onSubmit={handleSearchSubmit}>
+          <div className="admin-search-row">
+            {/* Search Input Wrap */}
+            <div className="admin-search-input-wrap">
+              <Search size={17} className="admin-search-icon" />
+              <input
+                type="text"
+                id="input-search-users"
+                className="admin-search-input"
+                placeholder="Search by username, email, or bio..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  id="btn-clear-search"
+                  className="admin-search-clear-btn"
+                  onClick={() => {
+                    setSearchQuery('');
+                    fetchUsers(1, '');
+                  }}
+                  title="Clear search query"
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
 
-          {/* Status Filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label
-              htmlFor="select-user-status"
-              style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}
+            {/* Filter Toggle Button */}
+            <button
+              type="button"
+              id="btn-apply-filters"
+              data-testid="btn-filter-toggle"
+              className={`admin-filter-toggle-btn ${showFilters || activeFiltersCount > 0 ? 'active' : ''}`}
+              onClick={() => setShowFilters((prev) => !prev)}
+              aria-expanded={showFilters}
+              title="Toggle directory filter options"
             >
-              Status:
-            </label>
-            <select
-              id="select-status-filter"
-              className="form-control"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ fontSize: '0.85rem', padding: '0.45rem 0.75rem', background: 'var(--bg-elevated)', minWidth: '120px' }}
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-            </select>
-          </div>
+              <Filter size={16} />
+              <span>Filter</span>
+              {activeFiltersCount > 0 && (
+                <span className="admin-filter-badge" id="badge-active-filters-count">
+                  {activeFiltersCount}
+                </span>
+              )}
+              <ChevronDown
+                size={14}
+                style={{
+                  transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease'
+                }}
+              />
+            </button>
 
-          {/* Role Filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label
-              htmlFor="select-user-role"
-              style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}
-            >
-              Role:
-            </label>
-            <select
-              id="select-user-role"
-              className="form-control"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              style={{ fontSize: '0.85rem', padding: '0.45rem 0.75rem', background: 'var(--bg-elevated)', minWidth: '120px' }}
-            >
-              <option value="all">All Roles</option>
-              <option value="reader">Readers</option>
-              <option value="admin">Administrators</option>
-            </select>
-          </div>
-
-          {/* Search / Refresh Button */}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {/* Search Submit Button */}
             <button
               type="submit"
-              id="btn-apply-filters"
+              id="btn-search-users"
               className="btn btn-primary btn-sm"
-              style={{ padding: '0.55rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+              style={{ padding: '0.65rem 1.15rem' }}
             >
-              <Filter size={15} />
-              <span>Filter</span>
+              <Search size={15} />
+              <span>Search</span>
             </button>
-            {searchQuery && (
+
+            {/* Refresh Directory Button */}
+            <button
+              type="button"
+              id="btn-refresh-users"
+              className="btn btn-secondary btn-icon"
+              onClick={() => fetchUsers(pagination.page)}
+              title="Refresh directory"
+              style={{ padding: '0.65rem' }}
+            >
+              <RefreshCw size={15} className={loading ? 'spin' : ''} />
+            </button>
+          </div>
+
+          {/* Expandable Filter Options Drawer */}
+          {showFilters && (
+            <div className="admin-filter-drawer" id="admin-filter-drawer">
+              <div className="admin-filter-drawer-header">
+                <div className="admin-filter-drawer-title">
+                  <SlidersHorizontal size={16} style={{ color: 'var(--primary)' }} />
+                  <span>Filter Directory</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>
+                    (Select options to refine the table)
+                  </span>
+                </div>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    id="btn-reset-filters"
+                    className="btn btn-ghost btn-sm"
+                    onClick={handleResetAllFilters}
+                    style={{ fontSize: '0.8rem', gap: '0.35rem', color: 'var(--text-muted)' }}
+                  >
+                    <RotateCcw size={13} />
+                    Reset All Filters
+                  </button>
+                )}
+              </div>
+
+              <div className="admin-filter-grid">
+                {/* 1. Account Status */}
+                <div className="admin-filter-group">
+                  <label htmlFor="select-status-filter" className="admin-filter-label">
+                    <Shield size={14} style={{ color: 'var(--primary)' }} />
+                    Account Status
+                  </label>
+                  <select
+                    id="select-status-filter"
+                    className="admin-filter-select"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="active">Active Only</option>
+                    <option value="suspended">Suspended Only</option>
+                  </select>
+                  <div className="admin-filter-pills">
+                    <button
+                      type="button"
+                      className={`admin-filter-pill ${statusFilter === 'all' ? 'active' : ''}`}
+                      onClick={() => setStatusFilter('all')}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      className={`admin-filter-pill ${statusFilter === 'active' ? 'active' : ''}`}
+                      onClick={() => setStatusFilter('active')}
+                    >
+                      Active
+                    </button>
+                    <button
+                      type="button"
+                      className={`admin-filter-pill ${statusFilter === 'suspended' ? 'active' : ''}`}
+                      onClick={() => setStatusFilter('suspended')}
+                    >
+                      Suspended
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. User Role */}
+                <div className="admin-filter-group">
+                  <label htmlFor="select-user-role" className="admin-filter-label">
+                    <UserCheck size={14} style={{ color: 'var(--accent-purple)' }} />
+                    User Role
+                  </label>
+                  <select
+                    id="select-user-role"
+                    className="admin-filter-select"
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="reader">Readers</option>
+                    <option value="admin">Administrators</option>
+                  </select>
+                  <div className="admin-filter-pills">
+                    <button
+                      type="button"
+                      className={`admin-filter-pill ${roleFilter === 'all' ? 'active' : ''}`}
+                      onClick={() => setRoleFilter('all')}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      className={`admin-filter-pill ${roleFilter === 'reader' ? 'active' : ''}`}
+                      onClick={() => setRoleFilter('reader')}
+                    >
+                      Readers
+                    </button>
+                    <button
+                      type="button"
+                      className={`admin-filter-pill ${roleFilter === 'admin' ? 'active' : ''}`}
+                      onClick={() => setRoleFilter('admin')}
+                    >
+                      Admins
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Sort Order */}
+                <div className="admin-filter-group">
+                  <label htmlFor="select-user-sort" className="admin-filter-label">
+                    <ArrowUpDown size={14} style={{ color: 'var(--accent-amber)' }} />
+                    Sort Order
+                  </label>
+                  <select
+                    id="select-user-sort"
+                    className="admin-filter-select"
+                    value={sortFilter}
+                    onChange={(e) => setSortFilter(e.target.value)}
+                  >
+                    <option value="newest">Newest Registered</option>
+                    <option value="oldest">Oldest Registered</option>
+                    <option value="username_asc">Username (A - Z)</option>
+                    <option value="username_desc">Username (Z - A)</option>
+                    <option value="most_blogs">Most Articles Written</option>
+                    <option value="most_comments">Most Comments</option>
+                  </select>
+                </div>
+
+                {/* 4. Activity Filter */}
+                <div className="admin-filter-group">
+                  <label htmlFor="select-activity-filter" className="admin-filter-label">
+                    <BookOpen size={14} style={{ color: 'var(--accent-cyan)' }} />
+                    Activity Level
+                  </label>
+                  <select
+                    id="select-activity-filter"
+                    className="admin-filter-select"
+                    value={activityFilter}
+                    onChange={(e) => setActivityFilter(e.target.value)}
+                  >
+                    <option value="all">All Activity Levels</option>
+                    <option value="writers">Writers (Published Articles)</option>
+                    <option value="commenters">Commenters (Active Discussions)</option>
+                    <option value="inactive">Inactive / Quiet Users</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="admin-filter-drawer-footer">
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Showing <strong>{pagination.total}</strong> matching {pagination.total === 1 ? 'user' : 'users'}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    id="btn-close-filter-drawer"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setShowFilters(false)}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-apply-drawer"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      fetchUsers(1);
+                      setShowFilters(false);
+                    }}
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Active Filter Chips Bar */}
+          {hasActiveFilters && (
+            <div className="admin-active-chips" id="active-filter-chips">
+              <span style={{ fontSize: '0.775rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                Active Filters:
+              </span>
+              {searchQuery.trim() && (
+                <span className="active-filter-chip">
+                  Search: "{searchQuery.trim()}"
+                  <button
+                    type="button"
+                    className="active-filter-chip-remove"
+                    onClick={() => {
+                      setSearchQuery('');
+                      fetchUsers(1, '');
+                    }}
+                    title="Clear search"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {statusFilter !== 'all' && (
+                <span className="active-filter-chip">
+                  Status: {statusFilter === 'active' ? 'Active' : 'Suspended'}
+                  <button
+                    type="button"
+                    className="active-filter-chip-remove"
+                    onClick={() => setStatusFilter('all')}
+                    title="Remove status filter"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {roleFilter !== 'all' && (
+                <span className="active-filter-chip">
+                  Role: {roleFilter === 'reader' ? 'Reader' : 'Administrator'}
+                  <button
+                    type="button"
+                    className="active-filter-chip-remove"
+                    onClick={() => setRoleFilter('all')}
+                    title="Remove role filter"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {sortFilter !== 'newest' && (
+                <span className="active-filter-chip">
+                  Sort: {sortFilter === 'oldest' ? 'Oldest' : sortFilter === 'username_asc' ? 'A-Z' : sortFilter === 'username_desc' ? 'Z-A' : sortFilter === 'most_blogs' ? 'Most Articles' : 'Most Comments'}
+                  <button
+                    type="button"
+                    className="active-filter-chip-remove"
+                    onClick={() => setSortFilter('newest')}
+                    title="Reset sort"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {activityFilter !== 'all' && (
+                <span className="active-filter-chip">
+                  Activity: {activityFilter === 'writers' ? 'Writers' : activityFilter === 'commenters' ? 'Commenters' : 'Inactive'}
+                  <button
+                    type="button"
+                    className="active-filter-chip-remove"
+                    onClick={() => setActivityFilter('all')}
+                    title="Remove activity filter"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
               <button
                 type="button"
-                id="btn-clear-search"
                 className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  fetchUsers(1, '');
-                }}
-                style={{ padding: '0.55rem 0.85rem' }}
+                id="btn-clear-all-chips"
+                onClick={handleResetAllFilters}
+                style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', color: 'var(--color-error)' }}
               >
-                Clear
+                Clear All
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </form>
       </div>
 

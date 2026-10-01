@@ -291,13 +291,13 @@ router.get('/admin/all', authenticate, requireAdmin, async (req, res) => {
     const limit = Math.max(1, Math.min(100, parseInt(req.query.limit) || 20));
     const skip = (page - 1) * limit;
 
-    const { search, status, role } = req.query;
+    const { search, status, role, sort, activity } = req.query;
 
     const filter = {};
 
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), 'i');
-      filter.$or = [{ username: regex }, { email: regex }];
+      filter.$or = [{ username: regex }, { email: regex }, { bio: regex }];
     }
 
     if (status && status !== 'all') {
@@ -308,38 +308,115 @@ router.get('/admin/all', authenticate, requireAdmin, async (req, res) => {
       filter.role = role;
     }
 
-    const total = await User.countDocuments(filter);
-    const rawUsers = await User.find(filter)
-      .select('-passwordHash -resetOtp')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    if (activity && activity !== 'all') {
+      if (activity === 'writers') {
+        const writerIds = await Blog.distinct('authorId');
+        filter._id = { $in: writerIds };
+      } else if (activity === 'commenters') {
+        const commenterIds = await Comment.distinct('userId');
+        filter._id = { $in: commenterIds };
+      } else if (activity === 'inactive') {
+        const [writerIds, commenterIds] = await Promise.all([
+          Blog.distinct('authorId'),
+          Comment.distinct('userId')
+        ]);
+        const activeIds = [...writerIds, ...commenterIds];
+        filter._id = { $nin: activeIds };
+      }
+    }
 
-    const userIds = rawUsers.map((u) => u._id);
+    let sortCriteria = { createdAt: -1 };
+    if (sort === 'oldest' || sort === 'createdAt_asc') {
+      sortCriteria = { createdAt: 1 };
+    } else if (sort === 'username_asc') {
+      sortCriteria = { username: 1 };
+    } else if (sort === 'username_desc') {
+      sortCriteria = { username: -1 };
+    }
 
-    // Aggregate activity counts (authored blogs & authored comments)
-    const [blogsAgg, commentsAgg] = await Promise.all([
-      Blog.aggregate([
-        { $match: { authorId: { $in: userIds } } },
-        { $group: { _id: '$authorId', count: { $sum: 1 } } }
-      ]),
-      Comment.aggregate([
-        { $match: { userId: { $in: userIds } } },
-        { $group: { _id: '$userId', count: { $sum: 1 } } }
-      ])
-    ]);
+    let total = 0;
+    let users = [];
 
-    const blogsMap = new Map(blogsAgg.map((b) => [b._id.toString(), b.count]));
-    const commentsMap = new Map(commentsAgg.map((c) => [c._id.toString(), c.count]));
+    if (sort === 'most_blogs' || sort === 'most_comments') {
+      total = await User.countDocuments(filter);
+      const pipeline = [
+        { $match: filter },
+        {
+          $lookup: {
+            from: 'blogs',
+            localField: '_id',
+            foreignField: 'authorId',
+            as: 'authoredBlogs'
+          }
+        },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: '_id',
+            foreignField: 'userId',
+            as: 'authoredComments'
+          }
+        },
+        {
+          $addFields: {
+            id: '$_id',
+            blogsCount: { $size: '$authoredBlogs' },
+            commentsCount: { $size: '$authoredComments' },
+            status: { $ifNull: ['$status', 'active'] }
+          }
+        },
+        {
+          $project: {
+            authoredBlogs: 0,
+            authoredComments: 0,
+            passwordHash: 0,
+            resetOtp: 0
+          }
+        },
+        {
+          $sort: sort === 'most_blogs'
+            ? { blogsCount: -1, createdAt: -1 }
+            : { commentsCount: -1, createdAt: -1 }
+        },
+        { $skip: skip },
+        { $limit: limit }
+      ];
 
-    const users = rawUsers.map((u) => ({
-      ...u,
-      id: u._id,
-      status: u.status || 'active',
-      blogsCount: blogsMap.get(u._id.toString()) || 0,
-      commentsCount: commentsMap.get(u._id.toString()) || 0
-    }));
+      users = await User.aggregate(pipeline);
+    } else {
+      total = await User.countDocuments(filter);
+      const rawUsers = await User.find(filter)
+        .select('-passwordHash -resetOtp')
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      const userIds = rawUsers.map((u) => u._id);
+
+      // Aggregate activity counts (authored blogs & authored comments)
+      const [blogsAgg, commentsAgg] = await Promise.all([
+        Blog.aggregate([
+          { $match: { authorId: { $in: userIds } } },
+          { $group: { _id: '$authorId', count: { $sum: 1 } } }
+        ]),
+        Comment.aggregate([
+          { $match: { userId: { $in: userIds } } },
+          { $group: { _id: '$userId', count: { $sum: 1 } } }
+        ])
+      ]);
+
+      const blogsMap = new Map(blogsAgg.map((b) => [b._id.toString(), b.count]));
+      const commentsMap = new Map(commentsAgg.map((c) => [c._id.toString(), c.count]));
+
+      users = rawUsers.map((u) => ({
+        ...u,
+        id: u._id,
+        status: u.status || 'active',
+        blogsCount: blogsMap.get(u._id.toString()) || 0,
+        commentsCount: commentsMap.get(u._id.toString()) || 0
+      }));
+    }
 
     // High-level system statistics
     const [totalUsers, activeUsers, suspendedUsers, totalReaders] = await Promise.all([

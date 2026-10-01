@@ -1820,4 +1820,297 @@
     text-align: center;
     padding: 2rem 1.25rem;
   }
+}
+
+/* ==========================================================================
+   Admin Users: Search & Filter Toolbar & Drawer Styles
+   ========================================================================== */
+
+.admin-toolbar-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.admin-toolbar-card:hover {
+  border-color: var(--border-medium);
+}
+
+.admin-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.admin-search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.admin-search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color var(--transition-fast);
+}
+
+.admin-search-input-wrap:focus-within .admin-search-icon {
+  color: var(--primary);
+}
+
+.admin-search-input {
+  width: 100%;
+  padding: 0.7rem 2.5rem 0.7rem 2.65rem;
+  font-size: 0.9rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+.admin-search-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--border-glow);
+  background: var(--bg-surface);
+}
+
+.admin-search-clear-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.admin-search-clear-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.admin-filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border: 1px solid var(--border-color);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.admin-filter-toggle-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-medium);
+}
+
+.admin-filter-toggle-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 3px 12px 0 rgba(20, 184, 166, 0.3);
+}
+
+.admin-filter-toggle-btn.active:hover {
+  background: var(--primary-hover);
+}
+
+.admin-filter-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+  line-height: 1.2;
+}
+
+.admin-filter-toggle-btn:not(.active) .admin-filter-badge {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.admin-filter-drawer {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  animation: adminFilterFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes adminFilterFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-filter-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.admin-filter-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.admin-filter-label {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-filter-select {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.admin-filter-select:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--border-glow);
+}
+
+.admin-filter-pills {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.admin-filter-pill {
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-filter-pill:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.admin-filter-pill.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+.admin-filter-drawer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.admin-active-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid rgba(20, 184, 166, 0.35);
+  animation: adminFilterFade 0.2s ease;
+}
+
+.active-filter-chip-remove {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin-left: 2px;
+  border-radius: 50%;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.active-filter-chip-remove:hover {
+  opacity: 1;
 }
