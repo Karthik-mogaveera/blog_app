@@ -1,13 +1,6 @@
 const mongoose = require('mongoose');
 
-const PREDEFINED_CATEGORIES = [
-  'Technology',
-  'Design',
-  'Lifestyle',
-  'Career',
-  'Tutorials',
-  'General'
-];
+const { PREDEFINED_CATEGORIES, ALL_SUPPORTED_CATEGORIES, normalizeCategory } = require('../constants/categories');
 
 const blogSchema = new mongoose.Schema(
   {
@@ -40,8 +33,9 @@ const blogSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, 'Category is required'],
+      set: (cat) => normalizeCategory(cat),
       enum: {
-        values: PREDEFINED_CATEGORIES,
+        values: ALL_SUPPORTED_CATEGORIES,
         message: '{VALUE} is not a supported category'
       },
       default: 'General'
