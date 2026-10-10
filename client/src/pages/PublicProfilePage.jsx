@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import BlogCard from '../components/BlogCard';
+import { APP_CONFIG } from '../config/appConfig';
 import {
   User as UserIcon,
   Calendar,
   BookOpen,
   ArrowLeft,
   Globe,
+  Film,
+  Video,
+  Youtube,
+  Instagram,
   Github,
   Twitter,
   Linkedin,
@@ -49,7 +54,7 @@ const PublicProfilePage = () => {
   if (loading) {
     return (
       <div className="container" style={{ padding: '6rem 0', textAlign: 'center' }}>
-        <p className="text-muted">Loading author profile...</p>
+        <p className="text-muted">Loading filmmaker profile...</p>
       </div>
     );
   }
@@ -62,11 +67,11 @@ const PublicProfilePage = () => {
         </h1>
         <h2 style={{ marginBottom: '1rem' }}>Author Not Found</h2>
         <p className="text-secondary" style={{ marginBottom: '2rem' }}>
-          {error || 'The requested writer profile does not exist or is unavailable.'}
+          {error || 'The requested profile does not exist or is unavailable.'}
         </p>
         <Link to="/" className="btn btn-primary" id="btn-back-home-404">
           <ArrowLeft size={16} />
-          <span>Return to Articles</span>
+          <span>Return to Feed</span>
         </Link>
       </div>
     );
@@ -81,7 +86,14 @@ const PublicProfilePage = () => {
 
   const socialLinks = author.socialLinks || {};
   const hasSocialLinks = Boolean(
-    socialLinks.website || socialLinks.github || socialLinks.twitter || socialLinks.linkedin
+    socialLinks.website ||
+    socialLinks.imdb ||
+    socialLinks.vimeo ||
+    socialLinks.youtube ||
+    socialLinks.instagram ||
+    socialLinks.github ||
+    socialLinks.twitter ||
+    socialLinks.linkedin
   );
 
   return (
@@ -90,7 +102,7 @@ const PublicProfilePage = () => {
       <div style={{ marginBottom: '1.5rem' }}>
         <Link to="/" className="btn btn-ghost btn-sm" id="btn-back-from-author">
           <ArrowLeft size={16} />
-          <span>Back to Articles</span>
+          <span>Back to Feed</span>
         </Link>
       </div>
 
@@ -123,9 +135,9 @@ const PublicProfilePage = () => {
             </h1>
             <span
               id="public-author-role-badge"
-              className={`badge ${author.role === 'admin' ? 'badge-admin' : 'badge-reader'}`}
+              className={`badge ${author.role === 'admin' ? 'badge-curator' : 'badge-member'}`}
             >
-              {author.role === 'admin' ? 'Administrator' : 'Writer & Reader'}
+              {author.role === 'admin' ? 'Curator' : 'Member'}
             </span>
           </div>
 
@@ -135,7 +147,7 @@ const PublicProfilePage = () => {
             className="text-secondary"
             style={{ fontSize: '1rem', lineHeight: 1.6, marginBottom: '1rem', maxWidth: '650px' }}
           >
-            {author.bio || 'This writer has not added a bio yet.'}
+            {author.bio || 'This filmmaker has not added a bio yet.'}
           </p>
 
           {/* Metadata & Social Row */}
@@ -155,7 +167,7 @@ const PublicProfilePage = () => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
             >
               <BookOpen size={15} />
-              <span>{author.totalArticles || blogs.length} Published {blogs.length === 1 ? 'Article' : 'Articles'}</span>
+              <span>{author.totalArticles || blogs.length} Released {blogs.length === 1 ? 'Story' : 'Stories'}</span>
             </span>
 
             {/* Social Icons */}
@@ -168,9 +180,57 @@ const PublicProfilePage = () => {
                     rel="noopener noreferrer"
                     id="author-link-website"
                     className="text-muted hover:text-primary"
-                    title="Personal Website"
+                    title="Portfolio / Website"
                   >
                     <Globe size={16} />
+                  </a>
+                )}
+                {socialLinks.imdb && (
+                  <a
+                    href={socialLinks.imdb.startsWith('http') ? socialLinks.imdb : `https://${socialLinks.imdb}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    id="author-link-imdb"
+                    className="text-muted hover:text-primary"
+                    title="IMDb Profile"
+                  >
+                    <Film size={16} />
+                  </a>
+                )}
+                {socialLinks.vimeo && (
+                  <a
+                    href={socialLinks.vimeo.startsWith('http') ? socialLinks.vimeo : `https://${socialLinks.vimeo}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    id="author-link-vimeo"
+                    className="text-muted hover:text-primary"
+                    title="Vimeo Showreel"
+                  >
+                    <Video size={16} />
+                  </a>
+                )}
+                {socialLinks.youtube && (
+                  <a
+                    href={socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://${socialLinks.youtube}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    id="author-link-youtube"
+                    className="text-muted hover:text-primary"
+                    title="YouTube Channel"
+                  >
+                    <Youtube size={16} />
+                  </a>
+                )}
+                {socialLinks.instagram && (
+                  <a
+                    href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram.replace(/^@/, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    id="author-link-instagram"
+                    className="text-muted hover:text-primary"
+                    title="Instagram"
+                  >
+                    <Instagram size={16} />
                   </a>
                 )}
                 {socialLinks.github && (
@@ -215,18 +275,18 @@ const PublicProfilePage = () => {
         </div>
       </div>
 
-      {/* Authored Published Articles Section */}
+      {/* Authored Released Stories Section */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div>
             <h2 id="public-author-stories-heading" style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
-              Published Stories
+              Released Stories
             </h2>
             <p className="text-secondary" style={{ fontSize: '0.9rem', margin: 0 }}>
-              Articles authored by {author.username}
+              Stories authored by {author.username}
             </p>
           </div>
-          <span className="badge badge-published">
+          <span className="badge badge-released">
             {blogs.length} {blogs.length === 1 ? 'Story' : 'Stories'}
           </span>
         </div>
@@ -245,10 +305,10 @@ const PublicProfilePage = () => {
           >
             <BookOpen size={36} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
             <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-              No Published Stories Yet
+              No Released Stories Yet
             </h3>
             <p className="text-secondary" style={{ maxWidth: '420px', margin: '0 auto', fontSize: '0.9rem' }}>
-              {author.username} hasn't published any public stories on Chronicle yet. Check back later!
+              {author.username} hasn't released any public stories on {APP_CONFIG.name} yet. Check back later!
             </p>
           </div>
         ) : (
