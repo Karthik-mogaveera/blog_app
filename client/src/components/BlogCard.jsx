@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, MessageSquare, Calendar, User, Tag } from 'lucide-react';
+import CategoryBadge from './CategoryBadge';
 
 const BlogCard = ({ blog, onTagClick, layout = 'grid' }) => {
   const hasCoverImage = Boolean(blog.coverImage && blog.coverImage.trim());
@@ -10,7 +11,7 @@ const BlogCard = ({ blog, onTagClick, layout = 'grid' }) => {
         day: 'numeric',
         year: 'numeric'
       })
-    : 'Draft';
+    : 'In production';
 
   return (
     <article
@@ -36,9 +37,7 @@ const BlogCard = ({ blog, onTagClick, layout = 'grid' }) => {
       <div className="blog-card-body">
         {/* Top Metadata: Category & Date */}
         <div className="blog-card-meta-top">
-          <span className={`badge badge-${blog.category || 'General'}`}>
-            {blog.category || 'General'}
-          </span>
+          <CategoryBadge category={blog.category} />
           <span className="text-xs text-muted flex items-center gap-1">
             <Calendar size={13} />
             {formattedDate}

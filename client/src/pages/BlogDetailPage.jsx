@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import CommentTree from '../components/CommentTree';
 import ShareModal from '../components/ShareModal';
+import CategoryBadge from '../components/CategoryBadge';
 import { renderRichContent } from '../utils/richText';
 import {
   Heart,
@@ -263,7 +264,7 @@ const BlogDetailPage = () => {
         day: 'numeric',
         year: 'numeric'
       })
-    : 'Draft';
+    : 'In production';
 
   return (
     <div className="container content-narrow" style={{ paddingBottom: '6rem' }}>
@@ -271,7 +272,7 @@ const BlogDetailPage = () => {
       <div style={{ paddingTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <Link to="/" className="btn btn-ghost btn-sm" id="btn-back-to-articles">
           <ArrowLeft size={16} />
-          Back to all articles
+          Back to all stories
         </Link>
         {user && (user.role === 'admin' || (blog.authorId && (blog.authorId === user._id || blog.authorId._id === user._id || blog.authorId.toString() === user._id.toString())) || blog.authorName === user.username) && (
           <Link
@@ -281,7 +282,7 @@ const BlogDetailPage = () => {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
           >
             <Edit3 size={14} />
-            <span>Edit Article</span>
+            <span>Edit Story</span>
           </Link>
         )}
       </div>
@@ -289,11 +290,9 @@ const BlogDetailPage = () => {
       {/* Article Header */}
       <header className="article-header">
         <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
-          <span className={`badge badge-${blog.category || 'General'}`}>
-            {blog.category || 'General'}
-          </span>
+          <CategoryBadge category={blog.category} />
           {blog.status === 'draft' && (
-            <span className="badge badge-draft">Draft Preview</span>
+            <span className="badge badge-draft badge-in-production">In production Preview</span>
           )}
         </div>
 

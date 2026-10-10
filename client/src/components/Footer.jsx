@@ -1,5 +1,6 @@
 import React from 'react';
-import { BookOpen, Heart } from 'lucide-react';
+import { Film } from 'lucide-react';
+import { APP_CONFIG } from '../config/appConfig';
 
 const Footer = () => {
   return (
@@ -18,17 +19,17 @@ const Footer = () => {
         >
           <div className="flex items-center gap-2">
             <div className="nav-logo-icon" style={{ width: 28, height: 28 }}>
-              <BookOpen size={16} />
+              <Film size={16} />
             </div>
-            <span className="font-bold text-lg">Chronicle</span>
+            <span className="font-bold text-lg font-display">{APP_CONFIG.name}</span>
           </div>
 
           <p className="text-sm text-muted" style={{ textAlign: 'center' }}>
-            A focused editorial blogging and reader interaction platform built with precision.
+            {APP_CONFIG.tagline}
           </p>
 
           <p className="text-xs text-muted flex items-center gap-1">
-            Crafted with modern web standards and architectural discipline.
+            The community for independent filmmakers, cinematographers, and creators.
           </p>
         </div>
 
@@ -41,7 +42,7 @@ const Footer = () => {
           }}
         >
           <span className="text-xs text-muted">
-            &copy; {new Date().getFullYear()} Chronicle Platform. All rights reserved.
+            &copy; {new Date().getFullYear()} {APP_CONFIG.name} · Chronicle Platform. All rights reserved.
           </span>
         </div>
       </div>

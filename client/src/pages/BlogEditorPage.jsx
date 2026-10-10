@@ -13,8 +13,7 @@ import {
   Image as ImageIcon,
   CheckCircle2
 } from 'lucide-react';
-
-const CATEGORIES = ['Technology', 'Design', 'Lifestyle', 'Career', 'Tutorials', 'General'];
+import { CATEGORIES, LEGACY_CATEGORIES } from '../constants/categories';
 
 const BlogEditorPage = () => {
   const { id } = useParams();
@@ -277,7 +276,7 @@ const BlogEditorPage = () => {
             onClick={() => handleSave('draft')}
             disabled={loading}
           >
-            <Save size={15} /> Save as Draft
+            <Save size={15} /> In Production
           </button>
           <button
             type="button"
@@ -286,7 +285,7 @@ const BlogEditorPage = () => {
             onClick={() => handleSave('published')}
             disabled={loading}
           >
-            <Send size={15} /> {isEditing && status === 'published' ? 'Update & Publish' : 'Publish Article'}
+            <Send size={15} /> {isEditing && status === 'published' ? 'Update & Release' : 'Release'}
           </button>
         </div>
       </div>
@@ -357,6 +356,11 @@ const BlogEditorPage = () => {
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
+                  </option>
+                ))}
+                {LEGACY_CATEGORIES.map((legacyCat) => (
+                  <option key={legacyCat} value={legacyCat}>
+                    {legacyCat}
                   </option>
                 ))}
               </select>
