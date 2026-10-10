@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import BlogCard from '../components/BlogCard';
 import Pagination from '../components/Pagination';
-import { Search, X, Sparkles, Filter, LayoutGrid, List, Users, BookOpen, User } from 'lucide-react';
+import { Search, X, Sparkles, Filter, LayoutGrid, List, Users, BookOpen, User, Film } from 'lucide-react';
+import { FILTER_CATEGORIES } from '../constants/categories';
+import { APP_CONFIG } from '../config/appConfig';
 
-const CATEGORIES = ['All', 'Technology', 'Design', 'Lifestyle', 'Career', 'Tutorials', 'General'];
+const CATEGORIES = FILTER_CATEGORIES;
 
 const HomePage = () => {
   const [searchType, setSearchType] = useState('articles'); // 'articles' | 'authors'
@@ -128,10 +130,10 @@ const HomePage = () => {
           Editorial Knowledge & Discourse
         </div>
         <h1 style={{ marginBottom: '1.25rem' }}>
-          Insights, Stories & <span className="text-gradient">Ideas</span>
+          Stories, Reels & <span className="text-gradient">Cinema</span>
         </h1>
         <p className="content-narrow" style={{ fontSize: '1.15rem', color: 'var(--text-secondary)' }}>
-          Explore articles on technology, software architecture, design systems, and modern engineering practices. Join discussions through threaded conversations.
+          {APP_CONFIG.description}
         </p>
       </section>
 
@@ -146,8 +148,8 @@ const HomePage = () => {
           marginBottom: '2.5rem'
         }}
       >
-        {/* Search Mode Toggle Tabs: Articles vs Writers */}
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+        {/* Search Mode Toggle Tabs: Articles vs Filmmakers */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
           <button
             type="button"
             id="tab-search-articles"
@@ -156,7 +158,7 @@ const HomePage = () => {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', borderRadius: 'var(--radius-md)' }}
           >
             <BookOpen size={15} />
-            <span>Search Articles</span>
+            <span>Search Stories</span>
           </button>
           <button
             type="button"
@@ -166,7 +168,7 @@ const HomePage = () => {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', borderRadius: 'var(--radius-md)' }}
           >
             <Users size={15} />
-            <span>Discover Writers & Readers</span>
+            <span>Discover Filmmakers & Members</span>
           </button>
         </div>
 

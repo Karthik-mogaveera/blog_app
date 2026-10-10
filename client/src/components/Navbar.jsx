@@ -4,7 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
 import NotificationDropdown from './NotificationDropdown';
+import { APP_CONFIG } from '../config/appConfig';
 import {
+  Film,
   BookOpen,
   LayoutDashboard,
   ShieldCheck,
@@ -16,7 +18,7 @@ import {
   Moon,
   Menu,
   X,
-  PenSquare,
+  Clapperboard,
   Bookmark,
   User,
   Users
@@ -49,9 +51,9 @@ const Navbar = () => {
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <div className="nav-logo-icon">
-            <BookOpen size={20} />
+            <Film size={20} />
           </div>
-          <span>Chronicle</span>
+          <span>{APP_CONFIG.name}</span>
         </Link>
 
         {/* Desktop Center Navigation Links */}
@@ -62,7 +64,7 @@ const Navbar = () => {
             id="nav-link-home"
             end
           >
-            Articles
+            Stories
           </NavLink>
 
           {isAdmin && (
@@ -101,8 +103,8 @@ const Navbar = () => {
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                 id="nav-link-write"
               >
-                <PenSquare size={16} />
-                Write
+                <Clapperboard size={16} />
+                Release
               </NavLink>
               <NavLink
                 to="/saved"
@@ -110,7 +112,7 @@ const Navbar = () => {
                 id="nav-link-saved"
               >
                 <Bookmark size={16} />
-                Saved
+                Watchlist
               </NavLink>
               <NavLink
                 to="/profile"
@@ -188,7 +190,7 @@ const Navbar = () => {
                   </div>
                   <div className="flex flex-col" style={{ lineHeight: 1.2 }}>
                     <span className="font-semibold text-sm">{user.username}</span>
-                    {isAdmin && <span className="badge badge-admin">Admin</span>}
+                    {isAdmin && <span className="badge badge-curator">Curator</span>}
                   </div>
                 </Link>
 
@@ -222,7 +224,7 @@ const Navbar = () => {
             type="button"
             className="nav-mobile-toggle"
             id="nav-mobile-toggle"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle navigation menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -285,8 +287,8 @@ const Navbar = () => {
                 id="nav-mobile-link-write"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <PenSquare size={18} />
-                <span>Write Story</span>
+                <Clapperboard size={18} />
+                <span>Release Story</span>
               </NavLink>
               <NavLink
                 to="/saved"
@@ -295,7 +297,7 @@ const Navbar = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Bookmark size={18} />
-                <span>Saved Articles</span>
+                <span>Watchlist</span>
               </NavLink>
               <NavLink
                 to="/profile"
@@ -334,7 +336,7 @@ const Navbar = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold text-sm">{user.username}</span>
-                  {isAdmin && <span className="badge badge-admin" style={{ alignSelf: 'flex-start' }}>Admin</span>}
+                  {isAdmin && <span className="badge badge-curator" style={{ alignSelf: 'flex-start' }}>Curator</span>}
                 </div>
               </Link>
               <button

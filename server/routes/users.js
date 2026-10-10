@@ -72,6 +72,10 @@ router.patch('/profile', authenticate, async (req, res) => {
     if (socialLinks !== undefined && typeof socialLinks === 'object' && socialLinks !== null) {
       user.socialLinks = {
         website: socialLinks.website !== undefined ? String(socialLinks.website).trim() : (user.socialLinks?.website || ''),
+        imdb: socialLinks.imdb !== undefined ? String(socialLinks.imdb).trim() : (user.socialLinks?.imdb || ''),
+        vimeo: socialLinks.vimeo !== undefined ? String(socialLinks.vimeo).trim() : (user.socialLinks?.vimeo || ''),
+        youtube: socialLinks.youtube !== undefined ? String(socialLinks.youtube).trim() : (user.socialLinks?.youtube || ''),
+        instagram: socialLinks.instagram !== undefined ? String(socialLinks.instagram).trim() : (user.socialLinks?.instagram || ''),
         twitter: socialLinks.twitter !== undefined ? String(socialLinks.twitter).trim() : (user.socialLinks?.twitter || ''),
         github: socialLinks.github !== undefined ? String(socialLinks.github).trim() : (user.socialLinks?.github || ''),
         linkedin: socialLinks.linkedin !== undefined ? String(socialLinks.linkedin).trim() : (user.socialLinks?.linkedin || '')

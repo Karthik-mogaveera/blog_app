@@ -12,6 +12,7 @@ import {
   Heart,
   MessageSquare
 } from 'lucide-react';
+import CategoryBadge from '../components/CategoryBadge';
 
 const SavedBlogsPage = () => {
   const { user, token } = useAuth();
@@ -88,16 +89,16 @@ const SavedBlogsPage = () => {
               <Bookmark size={18} />
             </div>
             <h1 style={{ fontSize: '2.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
-              Saved Articles
+              Saved Watchlist
             </h1>
           </div>
           <p className="text-secondary" style={{ fontSize: '0.95rem', margin: 0 }}>
-            Your personal reading list saved for later access
+            Your curated film stories and articles saved for later access
           </p>
         </div>
 
-        <div className="badge badge-Technology" style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
-          {savedItems.length} {savedItems.length === 1 ? 'article saved' : 'articles saved'}
+        <div className="badge badge-General" style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
+          {savedItems.length} {savedItems.length === 1 ? 'story saved' : 'stories saved'}
         </div>
       </div>
 
@@ -182,9 +183,7 @@ const SavedBlogsPage = () => {
 
                 <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <span className={`badge badge-${blog.category || 'General'}`}>
-                      {blog.category || 'General'}
-                    </span>
+                    <CategoryBadge category={blog.category} />
                     <button
                       type="button"
                       id={`btn-unsave-${bId}`}

@@ -76,32 +76,50 @@ body::after {
   background: var(--primary);
 }
 
-/* Typography Hierarchy */
-h1, h2, h3, h4, h5, h6 {
+/* Typography Hierarchy — Cinema Poster Display Headings */
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display);
   color: var(--text-primary);
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 h1 {
-  font-size: clamp(2rem, 4vw + 1rem, 3.25rem);
+  font-size: clamp(2.2rem, 4.5vw + 1rem, 3.75rem);
+  letter-spacing: 0.03em;
 }
 
 h2 {
-  font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.25rem);
+  font-size: clamp(1.75rem, 3vw + 0.8rem, 2.5rem);
 }
 
 h3 {
-  font-size: clamp(1.25rem, 1.5vw + 0.6rem, 1.65rem);
+  font-size: clamp(1.35rem, 1.8vw + 0.6rem, 1.85rem);
 }
 
 h4 {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
 }
 
 p {
   color: var(--text-secondary);
+}
+
+code, pre, .script-snippet, .font-script {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.script-snippet {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--primary);
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  line-height: 1.7;
 }
 
 a {

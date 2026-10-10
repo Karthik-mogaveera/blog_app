@@ -13,6 +13,8 @@ import {
   Edit3,
   Plus
 } from 'lucide-react';
+import CategoryBadge from '../components/CategoryBadge';
+import { APP_CONFIG } from '../config/appConfig';
 
 const MyStoriesPage = () => {
   const { user, token } = useAuth();
@@ -106,7 +108,7 @@ const MyStoriesPage = () => {
             My Stories
           </h1>
           <p className="text-secondary" style={{ marginTop: '0.25rem' }}>
-            Manage and view all articles published by <strong>@{user?.username}</strong>
+            Manage and view all stories created by <strong>@{user?.username}</strong>
           </p>
         </div>
 
@@ -117,7 +119,7 @@ const MyStoriesPage = () => {
           style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
         >
           <Plus size={18} />
-          <span>Write a Story</span>
+          <span>Release a Story</span>
         </Link>
       </div>
 
@@ -161,11 +163,11 @@ const MyStoriesPage = () => {
             You haven't written any stories yet
           </h2>
           <p className="text-secondary" style={{ maxWidth: '420px', margin: '0 auto 1.75rem auto', fontSize: '0.95rem' }}>
-            Share your knowledge, tutorials, or perspectives with the Chronicle community.
+            Share your film craft, productions, or insights with the {APP_CONFIG.name} community.
           </p>
           <Link to="/create-blog" className="btn btn-primary" id="btn-empty-write-story">
             <Plus size={16} />
-            <span>Write Your First Story</span>
+            <span>Release Your First Story</span>
           </Link>
         </div>
       ) : (
@@ -189,12 +191,10 @@ const MyStoriesPage = () => {
             >
               <div style={{ flex: 1, minWidth: '240px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-                  <span className={`badge badge-${blog.category || 'General'}`}>
-                    {blog.category || 'General'}
-                  </span>
+                  <CategoryBadge category={blog.category} />
                   <span
                     id={`story-status-badge-${blog._id || blog.id}`}
-                    className={`badge ${blog.status === 'published' ? 'badge-published' : 'badge-draft'}`}
+                    className={`badge ${blog.status === 'published' ? 'badge-published badge-released' : 'badge-draft badge-in-production'}`}
                   >
                     {blog.status === 'published' ? 'Published' : 'Draft'}
                   </span>

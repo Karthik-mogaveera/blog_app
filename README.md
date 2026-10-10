@@ -66,6 +66,14 @@ The application was built adhering to an Agile / Issue-Driven Scrum methodology 
 - **Sprint 4: Notification Center & Hardening**
   - `#10` In-App Notification Center
   - `#11` End-to-End System Hardening & Playwright Verification
+- **Filmmakers Community Transformation**
+  - **Phase 1: Cinema Theme & Relabeling (`feature/issue-26-cinema-theme-and-labels`)**
+    - 🎬 **Cinema Design System Tokens**: Day "Script paper" (`#FAF7F2`) and Night "Theatre" (`#0B0B0F`) palettes with primary darkened gold (`#B7791F` / `#E5A93C`), deep crimson (`#B3261E` / `#C8362E`), and rich teal (`#1F6F7A` / `#2F8F9D`) maintaining WCAG AA contrast.
+    - 🔤 **Filmmaking Typography Stack**: `Oswald` (poster-style uppercase display headings), `Plus Jakarta Sans` (editorial body copy), and `Courier Prime` (screenplay / script monospace snippets).
+    - 🎞️ **13 Canonical Filmmaking Categories**: Screenwriting, Directing, Cinematography, Editing & Post, Sound & Music, Production & Budgeting, Gear & Tech, Film Analysis & Reviews, Behind the Scenes, Short Film Showcase, Festivals & Distribution, Career & Collaboration, General. Single source of truth in `constants/categories.js` across client and server with safe legacy category fallback.
+    - 🏷️ **Community Relabeling**: Replaced general blogging terminology with filmmaking community nomenclature (`Stories` / `Articles`, `Release` / `Write`, `In Production` / `Draft`, `Curator` / `Admin`, `Member` / `Reader`, `Watchlist` / `Saved`).
+    - 🌐 **Filmmaking Profile Links**: Added portfolio integrations for IMDb, Vimeo, YouTube, Instagram, and personal portfolio site on filmmaker profiles.
+    - ⚙️ **Configurable Branding**: Extracted app metadata (`name: Chronicle Cinema`, `tagline`, `description`) into `client/src/config/appConfig.js`.
 
 ---
 

@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema(
     },
     socialLinks: {
       website: { type: String, trim: true, default: '' },
+      imdb: { type: String, trim: true, default: '' },
+      vimeo: { type: String, trim: true, default: '' },
+      youtube: { type: String, trim: true, default: '' },
+      instagram: { type: String, trim: true, default: '' },
       twitter: { type: String, trim: true, default: '' },
       github: { type: String, trim: true, default: '' },
       linkedin: { type: String, trim: true, default: '' }

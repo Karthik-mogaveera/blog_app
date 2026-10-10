@@ -17,8 +17,7 @@ import {
   CheckCircle2,
   Trash2
 } from 'lucide-react';
-
-const CATEGORIES = ['General', 'Technology', 'Design', 'Lifestyle', 'Career', 'Tutorials'];
+import { CATEGORIES, LEGACY_CATEGORIES } from '../constants/categories';
 
 const CreateBlogPage = () => {
   const { user, token } = useAuth();
@@ -190,7 +189,7 @@ const CreateBlogPage = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>
-            Write a Story
+            Release a Story
           </h1>
           <p className="text-secondary" style={{ marginTop: '0.25rem', fontSize: '0.95rem' }}>
             Publish your insights as <strong className="text-primary">@{user?.username}</strong>
@@ -207,7 +206,7 @@ const CreateBlogPage = () => {
             disabled={loading}
           >
             <Save size={16} />
-            <span>Save Draft</span>
+            <span>In Production</span>
           </button>
           <button
             type="button"
@@ -217,7 +216,7 @@ const CreateBlogPage = () => {
             disabled={loading}
           >
             <Send size={16} />
-            <span>{loading ? 'Publishing...' : 'Publish Story'}</span>
+            <span>{loading ? 'Releasing...' : 'Release'}</span>
           </button>
         </div>
       </div>
@@ -304,6 +303,11 @@ const CreateBlogPage = () => {
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
+                  </option>
+                ))}
+                {LEGACY_CATEGORIES.map((legacyCat) => (
+                  <option key={legacyCat} value={legacyCat}>
+                    {legacyCat}
                   </option>
                 ))}
               </select>

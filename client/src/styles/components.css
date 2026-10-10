@@ -26,12 +26,13 @@
 
 .btn-primary {
   background: var(--gradient-primary);
-  color: #ffffff;
-  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.35);
+  color: var(--primary-text);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
 }
 
 .btn-primary:hover {
-  box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.5);
+  box-shadow: var(--shadow-glow);
   transform: translateY(-1px);
 }
 
@@ -341,115 +342,271 @@
   text-transform: uppercase;
 }
 
-.badge-Technology {
-  background: rgba(20, 184, 166, 0.12);
-  color: #0f766e;
-  border: 1px solid rgba(20, 184, 166, 0.3);
+/* Consistent Muted Filmmaking Category Badges (Light / Day) */
+.badge-Screenwriting,
+.badge-screenwriting {
+  background: rgba(183, 121, 31, 0.12);
+  color: #8c5912;
+  border: 1px solid rgba(183, 121, 31, 0.28);
 }
 
+.badge-Directing,
+.badge-directing {
+  background: rgba(179, 38, 30, 0.10);
+  color: #9c1d16;
+  border: 1px solid rgba(179, 38, 30, 0.24);
+}
+
+.badge-Cinematography,
+.badge-cinematography,
 .badge-Design {
-  background: rgba(217, 70, 239, 0.12);
-  color: #c026d3;
-  border: 1px solid rgba(217, 70, 239, 0.3);
+  background: rgba(31, 111, 122, 0.12);
+  color: #165660;
+  border: 1px solid rgba(31, 111, 122, 0.28);
 }
 
-.badge-Lifestyle {
-  background: rgba(22, 163, 74, 0.12);
-  color: var(--color-success);
-  border: 1px solid rgba(22, 163, 74, 0.3);
-}
-
-.badge-Career {
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
+.badge-EditingPost,
+.badge-editing-post,
 .badge-Tutorials {
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--color-info);
-  border: 1px solid rgba(37, 99, 235, 0.3);
+  background: rgba(124, 58, 237, 0.10);
+  color: #6327c4;
+  border: 1px solid rgba(124, 58, 237, 0.24);
 }
 
-.badge-General {
-  background: rgba(100, 116, 139, 0.12);
+.badge-SoundMusic,
+.badge-sound-music {
+  background: rgba(14, 116, 144, 0.10);
+  color: #0b586d;
+  border: 1px solid rgba(14, 116, 144, 0.24);
+}
+
+.badge-ProductionBudgeting,
+.badge-production-budgeting {
+  background: rgba(180, 83, 9, 0.10);
+  color: #92400e;
+  border: 1px solid rgba(180, 83, 9, 0.24);
+}
+
+.badge-GearTech,
+.badge-gear-tech,
+.badge-Technology {
+  background: rgba(31, 111, 122, 0.12);
+  color: #165660;
+  border: 1px solid rgba(31, 111, 122, 0.26);
+}
+
+.badge-FilmAnalysisReviews,
+.badge-film-analysis-reviews {
+  background: rgba(190, 18, 60, 0.10);
+  color: #9f1239;
+  border: 1px solid rgba(190, 18, 60, 0.24);
+}
+
+.badge-BehindtheScenes,
+.badge-behind-the-scenes,
+.badge-Lifestyle {
+  background: rgba(21, 128, 61, 0.10);
+  color: #166534;
+  border: 1px solid rgba(21, 128, 61, 0.24);
+}
+
+.badge-ShortFilmShowcase,
+.badge-short-film-showcase {
+  background: rgba(183, 121, 31, 0.12);
+  color: #8c5912;
+  border: 1px solid rgba(183, 121, 31, 0.28);
+}
+
+.badge-FestivalsDistribution,
+.badge-festivals-distribution {
+  background: rgba(124, 58, 237, 0.10);
+  color: #6327c4;
+  border: 1px solid rgba(124, 58, 237, 0.24);
+}
+
+.badge-CareerCollaboration,
+.badge-career-collaboration,
+.badge-Career {
+  background: rgba(14, 116, 144, 0.10);
+  color: #0b586d;
+  border: 1px solid rgba(14, 116, 144, 0.24);
+}
+
+.badge-General,
+.badge-general {
+  background: rgba(104, 100, 96, 0.12);
   color: var(--text-secondary);
-  border: 1px solid rgba(100, 116, 139, 0.25);
+  border: 1px solid rgba(104, 100, 96, 0.24);
 }
 
-.badge-draft {
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+/* Status & Role Badges (Relabeled) */
+.badge-draft,
+.badge-in-production {
+  background: rgba(183, 121, 31, 0.12);
+  color: #8c5912;
+  border: 1px solid rgba(183, 121, 31, 0.28);
 }
 
-.badge-published {
-  background: rgba(22, 163, 74, 0.12);
-  color: var(--color-success);
-  border: 1px solid rgba(22, 163, 74, 0.3);
+.badge-published,
+.badge-released {
+  background: rgba(27, 122, 67, 0.12);
+  color: #1b7a43;
+  border: 1px solid rgba(27, 122, 67, 0.28);
 }
 
-.badge-admin {
-  background: rgba(139, 92, 246, 0.15);
-  color: #7c3aed;
-  border: 1px solid rgba(139, 92, 246, 0.3);
+.badge-admin,
+.badge-curator {
+  background: rgba(179, 38, 30, 0.10);
+  color: #9c1d16;
+  border: 1px solid rgba(179, 38, 30, 0.26);
   font-size: 0.675rem;
   padding: 0.1rem 0.45rem;
 }
 
-.badge-reader {
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.25);
+.badge-reader,
+.badge-member {
+  background: rgba(31, 111, 122, 0.12);
+  color: #165660;
+  border: 1px solid rgba(31, 111, 122, 0.26);
   font-size: 0.675rem;
   padding: 0.1rem 0.45rem;
 }
 
 .badge-active {
-  background: rgba(22, 163, 74, 0.12);
+  background: rgba(27, 122, 67, 0.12);
   color: var(--color-success);
-  border: 1px solid rgba(22, 163, 74, 0.3);
+  border: 1px solid rgba(27, 122, 67, 0.28);
 }
 
 .badge-suspended {
-  background: rgba(244, 63, 94, 0.12);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: rgba(179, 38, 30, 0.10);
+  color: var(--color-error);
+  border: 1px solid rgba(179, 38, 30, 0.26);
 }
 
-[data-theme="dark"] .badge-Technology {
-  background: rgba(20, 184, 166, 0.18);
-  color: #5eead4;
+/* Category & Role Badges (Night / Theatre) */
+[data-theme="dark"] .badge-Screenwriting,
+[data-theme="dark"] .badge-screenwriting {
+  background: rgba(229, 169, 60, 0.16);
+  color: #f6c872;
+  border-color: rgba(229, 169, 60, 0.32);
 }
 
+[data-theme="dark"] .badge-Directing,
+[data-theme="dark"] .badge-directing {
+  background: rgba(200, 54, 46, 0.16);
+  color: #f18780;
+  border-color: rgba(200, 54, 46, 0.32);
+}
+
+[data-theme="dark"] .badge-Cinematography,
+[data-theme="dark"] .badge-cinematography,
 [data-theme="dark"] .badge-Design {
-  background: rgba(236, 72, 153, 0.18);
-  color: #f472b6;
+  background: rgba(47, 143, 157, 0.16);
+  color: #6ed0de;
+  border-color: rgba(47, 143, 157, 0.32);
 }
 
-[data-theme="dark"] .badge-Lifestyle {
-  background: rgba(34, 197, 94, 0.18);
-  color: #4ade80;
-}
-
-[data-theme="dark"] .badge-Career {
-  background: rgba(245, 158, 11, 0.18);
-  color: #fbbf24;
-}
-
+[data-theme="dark"] .badge-EditingPost,
+[data-theme="dark"] .badge-editing-post,
 [data-theme="dark"] .badge-Tutorials {
-  background: rgba(96, 165, 250, 0.18);
-  color: #60a5fa;
+  background: rgba(167, 139, 250, 0.16);
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.32);
 }
 
-[data-theme="dark"] .badge-General {
-  background: rgba(148, 163, 184, 0.18);
-  color: #cbd5e1;
+[data-theme="dark"] .badge-SoundMusic,
+[data-theme="dark"] .badge-sound-music {
+  background: rgba(34, 211, 238, 0.16);
+  color: #67e8f9;
+  border-color: rgba(34, 211, 238, 0.32);
 }
 
-[data-theme="dark"] .badge-admin {
-  background: rgba(168, 85, 247, 0.2);
-  color: #c084fc;
+[data-theme="dark"] .badge-ProductionBudgeting,
+[data-theme="dark"] .badge-production-budgeting {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.32);
+}
+
+[data-theme="dark"] .badge-GearTech,
+[data-theme="dark"] .badge-gear-tech,
+[data-theme="dark"] .badge-Technology {
+  background: rgba(47, 143, 157, 0.16);
+  color: #6ed0de;
+  border-color: rgba(47, 143, 157, 0.32);
+}
+
+[data-theme="dark"] .badge-FilmAnalysisReviews,
+[data-theme="dark"] .badge-film-analysis-reviews {
+  background: rgba(251, 113, 133, 0.16);
+  color: #fda4af;
+  border-color: rgba(251, 113, 133, 0.32);
+}
+
+[data-theme="dark"] .badge-BehindtheScenes,
+[data-theme="dark"] .badge-behind-the-scenes,
+[data-theme="dark"] .badge-Lifestyle {
+  background: rgba(74, 222, 128, 0.16);
+  color: #86efac;
+  border-color: rgba(74, 222, 128, 0.32);
+}
+
+[data-theme="dark"] .badge-ShortFilmShowcase,
+[data-theme="dark"] .badge-short-film-showcase {
+  background: rgba(229, 169, 60, 0.16);
+  color: #f6c872;
+  border-color: rgba(229, 169, 60, 0.32);
+}
+
+[data-theme="dark"] .badge-FestivalsDistribution,
+[data-theme="dark"] .badge-festivals-distribution {
+  background: rgba(167, 139, 250, 0.16);
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.32);
+}
+
+[data-theme="dark"] .badge-CareerCollaboration,
+[data-theme="dark"] .badge-career-collaboration,
+[data-theme="dark"] .badge-Career {
+  background: rgba(47, 143, 157, 0.16);
+  color: #6ed0de;
+  border-color: rgba(47, 143, 157, 0.32);
+}
+
+[data-theme="dark"] .badge-General,
+[data-theme="dark"] .badge-general {
+  background: rgba(154, 151, 160, 0.16);
+  color: #d1ced7;
+  border-color: rgba(154, 151, 160, 0.32);
+}
+
+[data-theme="dark"] .badge-draft,
+[data-theme="dark"] .badge-in-production {
+  background: rgba(229, 169, 60, 0.16);
+  color: #f6c872;
+  border-color: rgba(229, 169, 60, 0.32);
+}
+
+[data-theme="dark"] .badge-published,
+[data-theme="dark"] .badge-released {
+  background: rgba(40, 167, 69, 0.16);
+  color: #68d391;
+  border-color: rgba(40, 167, 69, 0.32);
+}
+
+[data-theme="dark"] .badge-admin,
+[data-theme="dark"] .badge-curator {
+  background: rgba(200, 54, 46, 0.18);
+  color: #f18780;
+  border-color: rgba(200, 54, 46, 0.34);
+}
+
+[data-theme="dark"] .badge-reader,
+[data-theme="dark"] .badge-member {
+  background: rgba(47, 143, 157, 0.16);
+  color: #6ed0de;
+  border-color: rgba(47, 143, 157, 0.32);
 }
 
 .tag-chip {

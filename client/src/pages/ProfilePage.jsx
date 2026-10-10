@@ -2,12 +2,17 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ConfirmationModal from '../components/ConfirmationModal';
+import CategoryBadge from '../components/CategoryBadge';
 import {
   User,
   Camera,
   Trash2,
   Edit3,
   Globe,
+  Film,
+  Video,
+  Youtube,
+  Instagram,
   Github,
   Twitter,
   Linkedin,
@@ -38,6 +43,10 @@ const ProfilePage = () => {
     profilePicture: user?.profilePicture || user?.avatar || '',
     socialLinks: {
       website: user?.socialLinks?.website || '',
+      imdb: user?.socialLinks?.imdb || '',
+      vimeo: user?.socialLinks?.vimeo || '',
+      youtube: user?.socialLinks?.youtube || '',
+      instagram: user?.socialLinks?.instagram || '',
       twitter: user?.socialLinks?.twitter || '',
       github: user?.socialLinks?.github || '',
       linkedin: user?.socialLinks?.linkedin || ''
@@ -50,6 +59,10 @@ const ProfilePage = () => {
   const [editBio, setEditBio] = useState('');
   const [editSocial, setEditSocial] = useState({
     website: '',
+    imdb: '',
+    vimeo: '',
+    youtube: '',
+    instagram: '',
     twitter: '',
     github: '',
     linkedin: ''
@@ -82,6 +95,10 @@ const ProfilePage = () => {
           profilePicture: data.user.profilePicture || data.user.avatar || '',
           socialLinks: {
             website: data.user.socialLinks?.website || '',
+            imdb: data.user.socialLinks?.imdb || '',
+            vimeo: data.user.socialLinks?.vimeo || '',
+            youtube: data.user.socialLinks?.youtube || '',
+            instagram: data.user.socialLinks?.instagram || '',
             twitter: data.user.socialLinks?.twitter || '',
             github: data.user.socialLinks?.github || '',
             linkedin: data.user.socialLinks?.linkedin || ''
@@ -129,6 +146,10 @@ const ProfilePage = () => {
     setEditBio(profile.bio || '');
     setEditSocial({
       website: profile.socialLinks?.website || '',
+      imdb: profile.socialLinks?.imdb || '',
+      vimeo: profile.socialLinks?.vimeo || '',
+      youtube: profile.socialLinks?.youtube || '',
+      instagram: profile.socialLinks?.instagram || '',
       twitter: profile.socialLinks?.twitter || '',
       github: profile.socialLinks?.github || '',
       linkedin: profile.socialLinks?.linkedin || ''
@@ -536,10 +557,10 @@ const ProfilePage = () => {
                   </h1>
                   <span
                     id="profile-role-badge"
-                    className={`badge ${profile.role === 'admin' ? 'badge-admin' : 'badge-reader'}`}
+                    className={`badge ${profile.role === 'admin' ? 'badge-curator' : 'badge-member'}`}
                     style={{ textTransform: 'capitalize' }}
                   >
-                    {profile.role}
+                    {profile.role === 'admin' ? 'Curator' : 'Member'}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
@@ -590,7 +611,7 @@ const ProfilePage = () => {
                     margin: 0
                   }}
                 >
-                  {profile.bio || 'No bio provided yet. Click "Edit Profile" to tell readers about yourself and showcase your social links.'}
+                  {profile.bio || 'No filmmaker bio provided yet. Click "Edit Profile" to tell the community about your craft and add your portfolio links.'}
                 </p>
 
                 {/* Social / Portfolio Links Display */}
@@ -615,10 +636,86 @@ const ProfilePage = () => {
                       className="btn btn-ghost btn-sm"
                       id="link-social-website"
                       style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', gap: '0.35rem' }}
-                      title="Personal Website"
+                      title="Portfolio / Website"
                     >
                       <Globe size={14} />
                       <span>Website</span>
+                    </a>
+                  )}
+
+                  {profile.socialLinks?.imdb && (
+                    <a
+                      href={
+                        profile.socialLinks.imdb.startsWith('http')
+                          ? profile.socialLinks.imdb
+                          : `https://imdb.com/name/${profile.socialLinks.imdb.replace(/^@/, '')}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-ghost btn-sm"
+                      id="link-social-imdb"
+                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', gap: '0.35rem' }}
+                      title="IMDb Profile"
+                    >
+                      <Film size={14} />
+                      <span>IMDb</span>
+                    </a>
+                  )}
+
+                  {profile.socialLinks?.vimeo && (
+                    <a
+                      href={
+                        profile.socialLinks.vimeo.startsWith('http')
+                          ? profile.socialLinks.vimeo
+                          : `https://vimeo.com/${profile.socialLinks.vimeo.replace(/^@/, '')}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-ghost btn-sm"
+                      id="link-social-vimeo"
+                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', gap: '0.35rem' }}
+                      title="Vimeo Channel"
+                    >
+                      <Video size={14} />
+                      <span>Vimeo</span>
+                    </a>
+                  )}
+
+                  {profile.socialLinks?.youtube && (
+                    <a
+                      href={
+                        profile.socialLinks.youtube.startsWith('http')
+                          ? profile.socialLinks.youtube
+                          : `https://youtube.com/@${profile.socialLinks.youtube.replace(/^@/, '')}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-ghost btn-sm"
+                      id="link-social-youtube"
+                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', gap: '0.35rem' }}
+                      title="YouTube Channel"
+                    >
+                      <Youtube size={14} />
+                      <span>YouTube</span>
+                    </a>
+                  )}
+
+                  {profile.socialLinks?.instagram && (
+                    <a
+                      href={
+                        profile.socialLinks.instagram.startsWith('http')
+                          ? profile.socialLinks.instagram
+                          : `https://instagram.com/${profile.socialLinks.instagram.replace(/^@/, '')}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-ghost btn-sm"
+                      id="link-social-instagram"
+                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', gap: '0.35rem' }}
+                      title="Instagram"
+                    >
+                      <Instagram size={14} />
+                      <span>Instagram</span>
                     </a>
                   )}
 
@@ -748,9 +845,85 @@ const ProfilePage = () => {
                       type="text"
                       id="input-social-website"
                       className="form-control"
-                      placeholder="https://yourdomain.com"
+                      placeholder="https://yourportfolio.com"
                       value={editSocial.website}
                       onChange={(e) => setEditSocial({ ...editSocial, website: e.target.value })}
+                      style={{ fontSize: '0.85rem', padding: '0.45rem 0.75rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="input-social-imdb"
+                      style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}
+                    >
+                      <Film size={13} />
+                      IMDb (name ID or URL)
+                    </label>
+                    <input
+                      type="text"
+                      id="input-social-imdb"
+                      className="form-control"
+                      placeholder="nm1234567 or URL"
+                      value={editSocial.imdb || ''}
+                      onChange={(e) => setEditSocial({ ...editSocial, imdb: e.target.value })}
+                      style={{ fontSize: '0.85rem', padding: '0.45rem 0.75rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="input-social-vimeo"
+                      style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}
+                    >
+                      <Video size={13} />
+                      Vimeo
+                    </label>
+                    <input
+                      type="text"
+                      id="input-social-vimeo"
+                      className="form-control"
+                      placeholder="username or URL"
+                      value={editSocial.vimeo || ''}
+                      onChange={(e) => setEditSocial({ ...editSocial, vimeo: e.target.value })}
+                      style={{ fontSize: '0.85rem', padding: '0.45rem 0.75rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="input-social-youtube"
+                      style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}
+                    >
+                      <Youtube size={13} />
+                      YouTube
+                    </label>
+                    <input
+                      type="text"
+                      id="input-social-youtube"
+                      className="form-control"
+                      placeholder="@channel or URL"
+                      value={editSocial.youtube || ''}
+                      onChange={(e) => setEditSocial({ ...editSocial, youtube: e.target.value })}
+                      style={{ fontSize: '0.85rem', padding: '0.45rem 0.75rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="input-social-instagram"
+                      style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}
+                    >
+                      <Instagram size={13} />
+                      Instagram
+                    </label>
+                    <input
+                      type="text"
+                      id="input-social-instagram"
+                      className="form-control"
+                      placeholder="@handle or URL"
+                      value={editSocial.instagram || ''}
+                      onChange={(e) => setEditSocial({ ...editSocial, instagram: e.target.value })}
                       style={{ fontSize: '0.85rem', padding: '0.45rem 0.75rem' }}
                     />
                   </div>
@@ -987,7 +1160,7 @@ const ProfilePage = () => {
                 className={`btn btn-sm ${storyFilter === 'published' ? 'btn-primary' : 'btn-ghost'}`}
                 style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)' }}
               >
-                Published ({publishedStories})
+                Released ({publishedStories})
               </button>
               <button
                 type="button"
@@ -996,7 +1169,7 @@ const ProfilePage = () => {
                 className={`btn btn-sm ${storyFilter === 'draft' ? 'btn-primary' : 'btn-ghost'}`}
                 style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)' }}
               >
-                Drafts ({draftStories})
+                In Production ({draftStories})
               </button>
             </div>
 
@@ -1007,7 +1180,7 @@ const ProfilePage = () => {
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Plus size={18} />
-              <span>Write a Story</span>
+              <span>Release a Story</span>
             </Link>
           </div>
         </div>
@@ -1098,12 +1271,10 @@ const ProfilePage = () => {
               >
                 <div style={{ flex: 1, minWidth: '240px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                    <span className={`badge badge-${blog.category || 'General'}`}>
-                      {blog.category || 'General'}
-                    </span>
+                    <CategoryBadge category={blog.category} />
                     <span
                       id={`story-status-badge-${blog._id || blog.id}`}
-                      className={`badge ${blog.status === 'published' ? 'badge-published' : 'badge-draft'}`}
+                      className={`badge ${blog.status === 'published' ? 'badge-published badge-released' : 'badge-draft badge-in-production'}`}
                     >
                       {blog.status === 'published' ? 'Published' : 'Draft'}
                     </span>
