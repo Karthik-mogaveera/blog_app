@@ -1,71 +1,75 @@
 /* ==========================================================================
-   DESIGN TOKENS & COLOR SYSTEM (LIGHT & DARK MODES)
+   CINEMA DESIGN TOKENS & COLOR SYSTEM (THEATRE NIGHT & SCRIPT PAPER DAY)
    ========================================================================== */
 
 :root,
 [data-theme="light"] {
-  /* Brand Primary Actions */
-  --primary: #14B8A6;
-  --primary-hover: #0D9488;
-  --primary-active: #0F766E;
-  --primary-light: #F0FDFA;
-  --primary-surface: #F0FDFA;
-
-  /* Surfaces & Backgrounds */
-  --bg-body: #F8FAFC;
+  /* Day "Script paper" Theme */
+  --bg-body: #FAF7F2;
   --bg-surface: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F1F5F9;
-  --bg-elevated: #FFFFFF;
-  --bg-secondary: #F0FDFA;
-  --bg-glass: rgba(255, 255, 255, 0.88);
+  --bg-card-hover: #F4F0E8;
+  --bg-elevated: #F4F0E8;
+  --bg-secondary: #F4EFE6;
+  --bg-glass: rgba(250, 247, 242, 0.92);
 
   /* Borders & Dividers */
-  --border-subtle: #E2E8F0;
-  --border-medium: #CBD5E1;
-  --border-focus: #14B8A6;
-  --border-glow: rgba(20, 184, 166, 0.25);
+  --border-subtle: #E3DED4;
+  --border-medium: #D1CAC0;
+  --border-focus: #B7791F;
+  --border-glow: rgba(183, 121, 31, 0.25);
 
   /* Typography */
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #64748B;
-  --text-inverse: #FFFFFF;
+  --text-primary: #1A1A1F;
+  --text-secondary: #4A4742;
+  --text-muted: #686460;
+  --text-inverse: #FAF7F2;
 
-  /* Semantic Feedback Status Colors */
-  --color-success: #16A34A;
-  --color-warning: #F59E0B;
-  --color-error: #DC2626;
-  --color-info: #2563EB;
+  /* Cinema Accents */
+  --primary: #B7791F; /* Darkened gold for AA text/links/buttons on light background */
+  --primary-hover: #9E6517;
+  --primary-active: #825211;
+  --primary-light: #FBF4E8;
+  --primary-surface: #F8ECE0;
+  --primary-text: #FFFFFF;
 
-  /* Accent Utilities */
-  --accent-purple: #8B5CF6;
-  --accent-cyan: #06B6D4;
-  --accent-rose: #DC2626;
-  --accent-amber: #F59E0B;
-  --accent-emerald: #16A34A;
+  --color-gold: #B7791F;
+  --color-crimson: #B3261E; /* Likes/live cues */
+  --color-teal: #1F6F7A;    /* Links/info */
+  --color-success: #1B7A43;
+  --color-warning: #B7791F;
+  --color-error: #B3261E;
+  --color-info: #1F6F7A;
+
+  /* Category & Badge Accents */
+  --accent-purple: #7C3AED;
+  --accent-cyan: #0E7490;
+  --accent-rose: #BE123C;
+  --accent-amber: #B45309;
+  --accent-emerald: #15803D;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
-  --gradient-accent: linear-gradient(135deg, #14B8A6 0%, #2563EB 100%);
-  --gradient-card: linear-gradient(180deg, rgba(20, 184, 166, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
-  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(20, 184, 166, 0.12) 0%, transparent 70%);
+  --gradient-primary: linear-gradient(135deg, #B7791F 0%, #9E6517 100%);
+  --gradient-accent: linear-gradient(135deg, #B7791F 0%, #1F6F7A 100%);
+  --gradient-card: linear-gradient(180deg, rgba(183, 121, 31, 0.02) 0%, rgba(255, 255, 255, 0) 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(183, 121, 31, 0.1) 0%, transparent 70%);
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-  --shadow-glow: 0 0 20px -2px rgba(20, 184, 166, 0.25);
+  --shadow-sm: 0 1px 2px 0 rgba(26, 26, 31, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(26, 26, 31, 0.07), 0 2px 4px -2px rgba(26, 26, 31, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(26, 26, 31, 0.08), 0 4px 6px -4px rgba(26, 26, 31, 0.04);
+  --shadow-glow: 0 0 20px -2px rgba(183, 121, 31, 0.22);
 
   /* Typography Font Families */
+  --font-display: 'Oswald', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-mono: 'Courier Prime', 'JetBrains Mono', 'Courier New', monospace;
 
   /* Border Radii */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
   /* Transitions & Animation */
@@ -79,56 +83,64 @@
 }
 
 [data-theme="dark"] {
-  /* Brand Primary Actions */
-  --primary: #14B8A6;
-  --primary-hover: #2DD4BF;
-  --primary-active: #5EEAD4;
-  --primary-light: rgba(20, 184, 166, 0.15);
-  --primary-surface: #042F2E;
-
-  /* Surfaces & Backgrounds */
-  --bg-body: #0F172A;
-  --bg-surface: #1E293B;
-  --bg-card: #1E293B;
-  --bg-card-hover: #26354D;
-  --bg-elevated: #162033;
-  --bg-secondary: #042F2E;
-  --bg-glass: rgba(15, 23, 42, 0.88);
+  /* Night "Theatre" Theme */
+  --bg-body: #0B0B0F;
+  --bg-surface: #14141A;
+  --bg-card: #14141A;
+  --bg-card-hover: #1C1C24;
+  --bg-elevated: #1C1C24;
+  --bg-secondary: #181822;
+  --bg-glass: rgba(11, 11, 15, 0.90);
 
   /* Borders & Dividers */
-  --border-subtle: #334155;
-  --border-medium: #475569;
-  --border-focus: #14B8A6;
-  --border-glow: rgba(45, 212, 191, 0.35);
+  --border-subtle: #2A2A33;
+  --border-medium: #3A3A46;
+  --border-focus: #E5A93C;
+  --border-glow: rgba(229, 169, 60, 0.32);
 
   /* Typography */
-  --text-primary: #F8FAFC;
-  --text-secondary: #CBD5E1;
-  --text-muted: #94A3B8;
-  --text-inverse: #0F172A;
+  --text-primary: #F2EFE9;
+  --text-secondary: #C8C5BD;
+  --text-muted: #9A97A0;
+  --text-inverse: #0B0B0F;
 
-  /* Semantic Feedback Status Colors */
-  --color-success: #22C55E;
-  --color-warning: #FBBF24;
-  --color-error: #F87171;
-  --color-info: #60A5FA;
+  /* Cinema Accents */
+  --primary: #E5A93C; /* Primary Gold */
+  --primary-hover: #F0BC58;
+  --primary-active: #C8912A;
+  --primary-light: rgba(229, 169, 60, 0.15);
+  --primary-surface: #241E12;
+  --primary-text: #0B0B0F; /* Dark text on gold buttons per spec */
 
-  /* Accent Utilities */
+  --color-gold: #E5A93C;
+  --color-crimson: #C8362E; /* Likes/live cues */
+  --color-teal: #2F8F9D;    /* Links/info */
+  --color-success: #28A745;
+  --color-warning: #E5A93C;
+  --color-error: #C8362E;
+  --color-info: #2F8F9D;
+
+  /* Category & Badge Accents */
   --accent-purple: #A78BFA;
   --accent-cyan: #22D3EE;
-  --accent-rose: #F87171;
+  --accent-rose: #FB7185;
   --accent-amber: #FBBF24;
-  --accent-emerald: #22C55E;
+  --accent-emerald: #4ADE80;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #14B8A6 0%, #2DD4BF 100%);
-  --gradient-accent: linear-gradient(135deg, #14B8A6 0%, #60A5FA 100%);
-  --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
-  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(20, 184, 166, 0.18) 0%, transparent 70%);
+  --gradient-primary: linear-gradient(135deg, #E5A93C 0%, #D4982E 100%);
+  --gradient-accent: linear-gradient(135deg, #E5A93C 0%, #2F8F9D 100%);
+  --gradient-card: linear-gradient(180deg, rgba(229, 169, 60, 0.02) 0%, rgba(20, 20, 26, 0) 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(229, 169, 60, 0.16) 0%, transparent 70%);
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 24px -4px rgba(20, 184, 166, 0.35);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.6), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.7), 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 24px -4px rgba(229, 169, 60, 0.35);
+
+  /* Typography Font Families */
+  --font-display: 'Oswald', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Courier Prime', 'JetBrains Mono', 'Courier New', monospace;
 }
